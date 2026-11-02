@@ -2,6 +2,11 @@
 
 Open-source alternative to AWCC*
 
+> ### Fork: G15 5530 edition
+> This is a maintained fork of [AlexIII/tcc-g15](https://github.com/AlexIII/tcc-g15), kept up to date and tuned for the **Dell G15 5530** by **Md. Morshed Milton** ([@morshedmilton](https://github.com/morshedmilton)).
+> Original app, design and the AWCC WMI research are by [AlexIII](https://github.com/AlexIII) — see [Credits](#credits).
+> Upstream last shipped 1.6.4 (Jan 2025); this fork continues from upstream `master` under the same GPL-3.0 license.
+
 [Download link](https://github.com/AlexIII/tcc-g15/releases) *(Note: the app requires administrator privileges)*
 
 <img src="./screen-1.png" alt="Screenshot 1" width="600" />
@@ -99,6 +104,10 @@ https://qa-external-tm.plawebsvc01.net
 ```
 
 ## Credits
+
+Original app, GUI design and the AWCC WMI interface research: **[AlexIII](https://github.com/AlexIII)** (upstream [tcc-g15](https://github.com/AlexIII/tcc-g15)).
+
+Maintained fork, continued updates and Dell G15 5530 support: **[Md. Morshed Milton](https://github.com/morshedmilton)**.
 
 Big thanks to the amazing people who have contributed to the project:
 - @AprDeci for code / new features
