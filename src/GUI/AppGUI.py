@@ -77,6 +77,11 @@ class ThermalMode(Enum):
     Balanced = 'Balanced'
     G_Mode = 'G_Mode'
     Custom = 'Custom'
+    Performance = 'Performance'
+    Quiet = 'Quiet'
+
+# display order in the mode switch; G mode last because it is the loudest
+MODE_ORDER = [ThermalMode.Custom, ThermalMode.Balanced, ThermalMode.Performance, ThermalMode.Quiet, ThermalMode.G_Mode]
     
 class SettingsKey(Enum):
     Mode = "app/mode"
@@ -222,7 +227,7 @@ class TCC_GUI(QtWidgets.QWidget):
         lTherm.addWidget(self._thermalGPU)
         lTherm.addWidget(self._thermalCPU)
 
-        self._modeSwitch = QRadioButtonSet(None, None, list(map(lambda m: (m.name.replace('_', ' '), m.value), ThermalMode)))
+        self._modeSwitch = QRadioButtonSet(None, None, list(map(lambda m: (m.name.replace('_', ' '), m.value), MODE_ORDER)))
 
         # Fail-safe indicator
         failsafeIndicator = QtWidgets.QLabel()
@@ -301,13 +306,24 @@ class TCC_GUI(QtWidgets.QWidget):
         self._thermalGPU.speedSliderChanged(updateFanSpeed)
         self._thermalCPU.speedSliderChanged(updateFanSpeed)
 
+        self._lastGoodMode = ThermalMode.Balanced.value
+
         def onModeChange(val: str):
             self._thermalGPU.setSpeedDisabled(val != ThermalMode.Custom.value)
             self._thermalCPU.setSpeedDisabled(val != ThermalMode.Custom.value)
             res = self._awcc.setMode(self._awcc.Mode[val])
             print(f'Set mode {val}: ' + ('ok' if res else 'fail'))
             if not res:
+                if val in (ThermalMode.Quiet.value, ThermalMode.Performance.value):
+                    # This firmware doesn't know the mode (verified: G15 5530 answers -1
+                    # to 150/152 but 0 to the USTT ids). Drop the option instead of dying.
+                    print(f'Mode {val} is not supported here, hiding it')
+                    self._modeSwitch.setOptionEnabled(val, False)
+                    self._modeSwitch.setChecked(self._lastGoodMode)
+                    self.toasterMessage(["Not supported", f"This firmware has no {val} profile", "Thermal mode"])
+                    return
                 self._errorExit(f"Failed to set mode {val}", "Program is terminated")
+            self._lastGoodMode = val
             updateFanSpeed()
             if val != ThermalMode.G_Mode.value:
                 self._failsafeTrippedPrevModeStr = None # In case the mode was switched manually

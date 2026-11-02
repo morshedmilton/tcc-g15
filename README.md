@@ -116,6 +116,12 @@ Big thanks to the amazing people who have contributed to the project:
 
 ## Changelog
 
+- Unreleased (fork)
+  - Add: Quiet and Performance thermal profiles. The firmware id is resolved on first use —
+    this board (G15 5530, BIOS 1.36.0) answers only the USTT ids (Quiet `0xA3`, Performance `0xA1`)
+    and rejects the plain `150`/`152`, so a fixed id would have silently done nothing.
+  - A profile the firmware rejects is hidden instead of killing the app.
+
 - 1.7.0 (fork)
   - Fix: "Balanced" no longer silently falls back to Custom when the firmware rejects the USTT probe
   - Fix: G-mode is not restored on startup anymore (after a reboot the fans came up at full blast)

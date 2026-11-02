@@ -12,12 +12,18 @@ class AWCCWmiWrapper:
         Custom = 0
         Balanced = 0x97
         G_Mode = 0xAB
+        Quiet = 0x96
+        Performance = 0x98
 
-    _balancedModePatch = None # type: Optional[Union[False, int]]
-    _USTT_Balanced = 0xA0
+    # Firmware families disagree on the ids. Verified on a G15 5530 (BIOS 1.36.0):
+    # the plain 150/152/153 are rejected and only the USTT variants answer 0, while
+    # older boards accept the plain ids. Probe USTT first, then the plain value, and
+    # cache the winner per mode.
+    _USTT_IDS = {ThermalMode.Balanced: 0xA0, ThermalMode.Performance: 0xA1, ThermalMode.Quiet: 0xA3}
 
     def __init__(self, awcc: _wmi_object) -> None:
         self._awcc = awcc
+        self._resolvedModes: dict = {}
 
     def GetSensorTemperature(self, sensorId: int) -> Optional[int]:
         if not (sensorId in range(self.SENSOR_ID_FIRST, self.SENSOR_ID_LAST + 1)): return None
@@ -68,19 +74,22 @@ class AWCCWmiWrapper:
     def ApplyThermalMode(self, mode: ThermalMode) -> bool:
         if not isinstance(mode, self.ThermalMode):
             raise Exception('Invalid argument: mode is not instance of ThermalMode')
-        value = mode.value
 
-        # Patch balanced mode value for laptops with USTT support
-        if mode == self.ThermalMode.Balanced:
-            if self._balancedModePatch is None:
-                self._balancedModePatch = self._USTT_Balanced if self._Thermal_Control(self._USTT_Balanced) else False
-                print(f'Balanced mode patch: {self._balancedModePatch}')
-            # bool is a subclass of int, so the "probe failed" marker (False) used to
-            # pass this check and send mode 0 (Custom) when the user asked for Balanced.
-            if type(self._balancedModePatch) is int:
-                value = self._balancedModePatch
+        cached = self._resolvedModes.get(mode)
+        if cached is not None:
+            return cached is not False and self._Thermal_Control(cached)
 
-        return self._Thermal_Control(value)
+        # First use of this mode on this firmware: the probe call is itself the apply,
+        # so a 0 answer means the mode is now set and there is nothing left to do.
+        for candidate in [c for c in (self._USTT_IDS.get(mode), mode.value) if c is not None]:
+            if self._Thermal_Control(candidate):
+                self._resolvedModes[mode] = candidate
+                print(f'Mode {mode.name} resolved to {hex(candidate)}')
+                return True
+
+        self._resolvedModes[mode] = False
+        print(f'Mode {mode.name} is not supported by this firmware')
+        return False
 
     def SetAddonSpeedPercent(self, fanId: int, speed: int) -> bool:
         if not (fanId in range(self.FAN_ID_FIRST, self.FAN_ID_LAST + 1)): return False

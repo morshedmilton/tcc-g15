@@ -24,6 +24,7 @@
 | R-13 | **Windows Update breaks WMI namespace / permissions** | Low | High | Test on Windows Insider builds if possible; document recovery (re-enable WMI, restore point) | Watching |
 | R-14 | **False positive antivirus flag on unsigned PyInstaller exe** | Medium | Medium | Code-sign cert (later); VirusTotal scan in CI; document in README | Phase 6 |
 | R-15 | **Sleep/resume breaks WMI handle / fan state** | Medium | High | Watchdog detects resume → re-init WMI → restore default mode; test in Phase 6 | Phase 6 |
+| R-16 | **No Windows restore point available before hardware tests** — `Checkpoint-Computer` fails, VSS/System Protection disabled on this machine (verified 2026-11-03) | Certain | Medium | Equivalent rollback: `tools/restore_default_mode.py` (sets Balanced over WMI) + documented uninstall path; our writes are transient thermal-mode state, wiped by reboot, no disk/BIOS/EC writes | Accepted gap, documented |
 
 ---
 

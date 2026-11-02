@@ -1,0 +1,367 @@
+{
+  "model": "Dell G15 5530",
+  "bios": "1.36.0",
+  "candidates": [
+    {
+      "name": "Quiet",
+      "mode_value": 150,
+      "apply_ms": 11,
+      "return": null,
+      "accepted": false,
+      "samples": [
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3942,
+            3504
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3934,
+            3486
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3908,
+            3492
+          ],
+          "nvml_gpu_c": 53
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "mode_value": 152,
+      "apply_ms": 15,
+      "return": null,
+      "accepted": false,
+      "samples": [
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3901,
+            3486
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            64,
+            55
+          ],
+          "rpm": [
+            3916,
+            3486
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3863,
+            3486
+          ],
+          "nvml_gpu_c": 53
+        }
+      ]
+    },
+    {
+      "name": "FullSpeed",
+      "mode_value": 153,
+      "apply_ms": 16,
+      "return": null,
+      "accepted": false,
+      "samples": [
+        {
+          "temps": [
+            64,
+            55
+          ],
+          "rpm": [
+            3916,
+            3504
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            64,
+            55
+          ],
+          "rpm": [
+            3901,
+            3468
+          ],
+          "nvml_gpu_c": 53
+        },
+        {
+          "temps": [
+            63,
+            55
+          ],
+          "rpm": [
+            3878,
+            3462
+          ],
+          "nvml_gpu_c": 53
+        }
+      ]
+    },
+    {
+      "name": "USTT_Quiet",
+      "mode_value": 163,
+      "apply_ms": 66,
+      "return": 0,
+      "accepted": true,
+      "samples": [
+        {
+          "temps": [
+            65,
+            56
+          ],
+          "rpm": [
+            1912,
+            2056
+          ],
+          "nvml_gpu_c": 54
+        },
+        {
+          "temps": [
+            65,
+            56
+          ],
+          "rpm": [
+            1753,
+            2022
+          ],
+          "nvml_gpu_c": 54
+        },
+        {
+          "temps": [
+            65,
+            57
+          ],
+          "rpm": [
+            1830,
+            2132
+          ],
+          "nvml_gpu_c": 55
+        }
+      ]
+    },
+    {
+      "name": "USTT_Performance",
+      "mode_value": 161,
+      "apply_ms": 114,
+      "return": 0,
+      "accepted": true,
+      "samples": [
+        {
+          "temps": [
+            68,
+            58
+          ],
+          "rpm": [
+            2162,
+            2473
+          ],
+          "nvml_gpu_c": 56
+        },
+        {
+          "temps": [
+            67,
+            58
+          ],
+          "rpm": [
+            2191,
+            2448
+          ],
+          "nvml_gpu_c": 56
+        },
+        {
+          "temps": [
+            67,
+            59
+          ],
+          "rpm": [
+            2162,
+            2451
+          ],
+          "nvml_gpu_c": 56
+        }
+      ]
+    },
+    {
+      "name": "USTT_Cool",
+      "mode_value": 162,
+      "apply_ms": 13,
+      "return": null,
+      "accepted": false,
+      "samples": [
+        {
+          "temps": [
+            68,
+            59
+          ],
+          "rpm": [
+            2165,
+            2451
+          ],
+          "nvml_gpu_c": 57
+        },
+        {
+          "temps": [
+            68,
+            59
+          ],
+          "rpm": [
+            2191,
+            2473
+          ],
+          "nvml_gpu_c": 57
+        },
+        {
+          "temps": [
+            68,
+            59
+          ],
+          "rpm": [
+            2239,
+            2527
+          ],
+          "nvml_gpu_c": 57
+        }
+      ]
+    },
+    {
+      "name": "USTT_FullSpeed",
+      "mode_value": 164,
+      "apply_ms": 13,
+      "return": null,
+      "accepted": false,
+      "samples": [
+        {
+          "temps": [
+            68,
+            60
+          ],
+          "rpm": [
+            2211,
+            2501
+          ],
+          "nvml_gpu_c": 57
+        },
+        {
+          "temps": [
+            68,
+            60
+          ],
+          "rpm": [
+            2234,
+            2523
+          ],
+          "nvml_gpu_c": 57
+        },
+        {
+          "temps": [
+            69,
+            60
+          ],
+          "rpm": [
+            2211,
+            2498
+          ],
+          "nvml_gpu_c": 57
+        }
+      ]
+    },
+    {
+      "name": "G_Mode",
+      "mode_value": 171,
+      "apply_ms": 29,
+      "return": 0,
+      "accepted": true,
+      "samples": [
+        {
+          "temps": [
+            81,
+            59
+          ],
+          "rpm": [
+            4761,
+            4854
+          ],
+          "nvml_gpu_c": 57
+        },
+        {
+          "temps": [
+            67,
+            58
+          ],
+          "rpm": [
+            5004,
+            5042
+          ],
+          "nvml_gpu_c": 56
+        },
+        {
+          "temps": [
+            66,
+            57
+          ],
+          "rpm": [
+            5080,
+            5093
+          ],
+          "nvml_gpu_c": 55
+        }
+      ]
+    }
+  ],
+  "baseline_before": {
+    "temps": [
+      70,
+      56
+    ],
+    "rpm": [
+      3916,
+      3486
+    ],
+    "nvml_gpu_c": 53
+  },
+  "restore_balanced": {
+    "ok": true,
+    "after": {
+      "temps": [
+        65,
+        57
+      ],
+      "rpm": [
+        5136,
+        5123
+      ],
+      "nvml_gpu_c": 54
+    }
+  }
+}

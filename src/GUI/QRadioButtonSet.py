@@ -29,6 +29,10 @@ class QRadioButtonSet(QtWidgets.QWidget):
     def setChecked(self, value: str):
         self._buttons[value].setChecked(True)
 
+    def setOptionEnabled(self, value: str, enabled: bool) -> None:
+        if value in self._buttons:
+            self._buttons[value].setEnabled(enabled)
+
     def getChecked(self) -> Optional[str]:
         for rb in self._buttons.values():
             if rb.isChecked():

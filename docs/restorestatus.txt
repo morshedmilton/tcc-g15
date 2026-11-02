@@ -1,0 +1,9 @@
+﻿reg : ERROR: Invalid syntax.
+At line:4 char:1
++ reg query HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SystemRes ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ERROR: Invalid syntax.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Type "REG QUERY /?" for usage.
+
