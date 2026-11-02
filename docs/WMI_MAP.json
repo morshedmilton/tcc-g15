@@ -1,0 +1,300 @@
+{
+  "model": "Dell Inc. Dell G15 5530",
+  "bios": {
+    "version": "1.36.0",
+    "release": "20260826000000.000000+000"
+  },
+  "groups": {
+    "thermal_fan": [
+      {
+        "namespace": "root\\WMI",
+        "class": "AWCCWmiMethodFunction",
+        "exists": true,
+        "instances": 0,
+        "methods": [],
+        "error": "instance query: x_access_denied"
+      },
+      {
+        "namespace": "root\\WMI",
+        "class": "MSAcpi_ThermalZoneTemperature",
+        "exists": true,
+        "instances": 0,
+        "methods": [],
+        "error": "instance query: x_wmi"
+      },
+      {
+        "namespace": "root\\WMI",
+        "class": "KernelThermalPolicyChange",
+        "exists": true,
+        "instances": 0,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\WMI",
+        "class": "KernelThermalConstraintChange",
+        "exists": true,
+        "instances": 0,
+        "methods": [],
+        "error": null
+      }
+    ],
+    "power": [
+      {
+        "namespace": "root\\WMI",
+        "class": "BatteryStatus",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_Battery",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_PowerPlan",
+        "exists": false,
+        "instances": 0,
+        "methods": [],
+        "error": "class not found"
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_ComputerSystem",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      }
+    ],
+    "processor_gpu": [
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_Processor",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_VideoController",
+        "exists": true,
+        "instances": 2,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_Fan",
+        "exists": true,
+        "instances": 2,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_TemperatureProbe",
+        "exists": true,
+        "instances": 2,
+        "methods": [],
+        "error": null
+      }
+    ],
+    "lighting": [
+      {
+        "namespace": "root\\WMI",
+        "class": "AWCCWmiMethodFunction",
+        "exists": true,
+        "instances": 0,
+        "methods": [],
+        "error": "instance query: x_access_denied"
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_Keyboard",
+        "exists": true,
+        "instances": 3,
+        "methods": [],
+        "error": null
+      }
+    ],
+    "system": [
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_BIOS",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_BaseBoard",
+        "exists": true,
+        "instances": 1,
+        "methods": [],
+        "error": null
+      },
+      {
+        "namespace": "root\\CIMV2",
+        "class": "Win32_PhysicalMemory",
+        "exists": true,
+        "instances": 2,
+        "methods": [],
+        "error": null
+      }
+    ]
+  },
+  "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+  "gpus": [
+    "Intel(R) UHD Graphics",
+    "NVIDIA GeForce RTX 4060 Laptop GPU"
+  ],
+  "ram_gb": 15.7,
+  "os": "Microsoft Windows 11 Pro",
+  "awcc_methods": [
+    {
+      "name": "Return_OverclockingReport",
+      "id": 13
+    },
+    {
+      "name": "Set_OCUIBIOSControl",
+      "id": 14
+    },
+    {
+      "name": "Clear_OCFailSafeFlag",
+      "id": 15
+    },
+    {
+      "name": "GetFanSensors",
+      "id": 19
+    },
+    {
+      "name": "Thermal_Information",
+      "id": 20
+    },
+    {
+      "name": "Thermal_Control",
+      "id": 21
+    },
+    {
+      "name": "BIOSOCControl",
+      "id": 22
+    },
+    {
+      "name": "MemoryOCControl",
+      "id": 23
+    },
+    {
+      "name": "AmdRyzenPlatformOCControl",
+      "id": 24
+    },
+    {
+      "name": "OCDefaultValue",
+      "id": 25
+    },
+    {
+      "name": "SystemInformation",
+      "id": 26
+    },
+    {
+      "name": "BiosOCKnobs",
+      "id": 27
+    },
+    {
+      "name": "PowerInformation",
+      "id": 28
+    },
+    {
+      "name": "TccControl",
+      "id": 30
+    },
+    {
+      "name": "FWUpdateGPIOtoggle",
+      "id": 32
+    },
+    {
+      "name": "ReadTotalofGPIOs",
+      "id": 33
+    },
+    {
+      "name": "ReadGPIOpPinStatus",
+      "id": 34
+    },
+    {
+      "name": "ReadChassisColor",
+      "id": 35
+    },
+    {
+      "name": "ReadPlatformProperties",
+      "id": 36
+    },
+    {
+      "name": "GameShiftStatus",
+      "id": 37
+    },
+    {
+      "name": "MUXSwitch",
+      "id": 49
+    },
+    {
+      "name": "CalderaSWInstallation",
+      "id": 128
+    },
+    {
+      "name": "CalderaSWReleased",
+      "id": 129
+    },
+    {
+      "name": "CalderaConnectionStatus",
+      "id": 130
+    },
+    {
+      "name": "SurpriseUnpluggedFlagStatus",
+      "id": 131
+    },
+    {
+      "name": "ClearSurpriseUnpluggedFlag",
+      "id": 132
+    },
+    {
+      "name": "CancelUndockRequest",
+      "id": 133
+    },
+    {
+      "name": "DevicesInCaldera",
+      "id": 135
+    },
+    {
+      "name": "NotifyBIOSForSWReadyToDisconnectCaldera",
+      "id": 136
+    },
+    {
+      "name": "TobiiSWinstallation",
+      "id": 160
+    },
+    {
+      "name": "TobiiSWReleased",
+      "id": 161
+    },
+    {
+      "name": "TobiiCameraPowerReset",
+      "id": 162
+    },
+    {
+      "name": "TobiiCameraPowerOn",
+      "id": 163
+    },
+    {
+      "name": "TobiiCameraPowerOff",
+      "id": 164
+    }
+  ]
+}

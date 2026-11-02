@@ -1,0 +1,10 @@
+{
+  "target_pid": 10568,
+  "csv": "baseline-20261103-004632.csv",
+  "rows": 273,
+  "idle_sec": 180,
+  "cpu_sec": 240,
+  "fan_map": "[(50, [1]), (51, [6])]",
+  "model": "Dell G15 5530",
+  "app": "installed tcc-g15 1.6.4 build (2025-01-15)"
+}
