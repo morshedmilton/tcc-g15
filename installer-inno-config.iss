@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Thermal Control Center"
-#define MyAppVersion "1.6.5"
-#define MyAppPublisher "AlexIII"
-#define MyAppURL "https://github.com/AlexIII/tcc-g15"
+#define MyAppVersion "1.7.0"
+#define MyAppPublisher "Md. Morshed Milton (fork of AlexIII/tcc-g15)"
+#define MyAppURL "https://github.com/morshedmilton/tcc-g15"
 #define MyAppExeName "tcc-g15.exe"
 
 [Setup]

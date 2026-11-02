@@ -99,10 +99,12 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_GPU_TEMP = 85
     FAILSAFE_TRIGGER_DELAY_SEC = 8
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
+    FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.6.5"
+    APP_VERSION = "1.7.0"
     APP_DESCRIPTION = "This app is an open-source replacement for Alienware Control Center "
-    APP_URL = "github.com/AlexIII/tcc-g15"
+    APP_URL = "github.com/morshedmilton/tcc-g15"
+    APP_CREDITS = "Original app and AWCC WMI research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
 
     # Green to Yellow and Yellow to Red thresholds
     GPU_COLOR_LIMITS = (72, 85)
@@ -112,6 +114,8 @@ class TCC_GUI(QtWidgets.QWidget):
     _failsafeTempIsHighTs = 0                           # Last time when the temp was registered to be high
     _failsafeTempIsHighStartTs: Optional[int] = None    # Time when the temp first registered to be high (without going lower than the threshold)
     _failsafeTrippedPrevModeStr: Optional[str] = None   # Mode (Custom, Balanced) before fail-safe tripped, as a string
+    _cpuUnknownSince: Optional[float] = None            # When the CPU sensor first stopped answering
+    _gpuUnknownSince: Optional[float] = None            # When the GPU sensor first stopped answering
     _failsafeOn = True
     _prevSavedSettingsValues: list = []
 
@@ -135,7 +139,7 @@ class TCC_GUI(QtWidgets.QWidget):
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
             evt.button() == QtCore.Qt.RightButton and
-            alert("About", f"{self.APP_NAME} v{self.APP_VERSION}", message2 = f"{self.APP_DESCRIPTION}\n{self.APP_URL}")
+            alert("About", f"{self.APP_NAME} v{self.APP_VERSION}", message2 = f"{self.APP_DESCRIPTION}\n\n{self.APP_CREDITS}")
         )
 
         # Set up tray icon
@@ -317,9 +321,9 @@ class TCC_GUI(QtWidgets.QWidget):
 
         def updateAppState():
             # Get temps and RPMs
-            gpuTemp = self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx)
+            gpuTemp = self._saneTemp(self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx))
             gpuRPM = self._awcc.getFanRPM(self._awcc.GPUFanIdx)
-            cpuTemp = self._awcc.getFanRelatedTemp(self._awcc.CPUFanIdx)
+            cpuTemp = self._saneTemp(self._awcc.getFanRelatedTemp(self._awcc.CPUFanIdx))
             cpuRPM = self._awcc.getFanRPM(self._awcc.CPUFanIdx)
             # Update UI gauges
             if gpuTemp is not None: self._thermalGPU.setTemp(gpuTemp)
@@ -329,9 +333,17 @@ class TCC_GUI(QtWidgets.QWidget):
             # print(gpuTemp, gpuRPM, cpuTemp, cpuRPM)
 
             # Handle fail-safe
+            # Dell's driver intermittently reports 2-3 °C (also when the dGPU is asleep, #9), so a
+            # single bogus reading must not trip the fail-safe - but a sensor that stays silent must.
+            now = time.time()
+            self._cpuUnknownSince = None if cpuTemp is not None else (self._cpuUnknownSince or now)
+            self._gpuUnknownSince = None if gpuTemp is not None else (self._gpuUnknownSince or now)
+            def sensorGone(ts: Optional[float]) -> bool:
+                return ts is not None and now - ts > self.FAILSAFE_UNKNOWN_GRACE_SEC
             tempIsHigh = (
-                (gpuTemp is None) or (gpuTemp >= self.FAILSAFE_GPU_TEMP) or
-                (cpuTemp is None) or (cpuTemp >= self.FAILSAFE_CPU_TEMP)
+                (cpuTemp is not None and cpuTemp >= self.FAILSAFE_CPU_TEMP) or
+                (gpuTemp is not None and gpuTemp >= self.FAILSAFE_GPU_TEMP) or
+                sensorGone(self._cpuUnknownSince) or sensorGone(self._gpuUnknownSince)
             )
             
             if tempIsHigh:
@@ -420,7 +432,7 @@ class TCC_GUI(QtWidgets.QWidget):
         if self.gModeHotKey is not None:
             self.gModeHotKey.stop()
             self.gModeHotKey.wait()
-        if self.gModeHotKey is not None:
+        if self._updateGaugesTask is not None:
             self._updateGaugesTask.stop()
         print('Cleanup: done')
 
@@ -450,9 +462,18 @@ class TCC_GUI(QtWidgets.QWidget):
         toast.AddImage(ToastDisplayImage.fromPath(resourcePath(GUI_ICON)))
         self._toaster.show_toast(toast)
 
+    @staticmethod
+    def _saneTemp(t: Optional[int]) -> Optional[int]:
+        # Implausible readings are "no data", not 2 °C (Dell driver bug, issue #9)
+        return t if isinstance(t, int) and 5 <= t <= 120 else None
+
     def _saveAppSettings(self):
+        # G-mode is a temporary boost, so remember the mode the user picked before it
+        modeToSave = self._modeSwitch.getChecked()
+        if modeToSave == ThermalMode.G_Mode.value:
+            modeToSave = self._gModeKeyPrevModeStr or ThermalMode.Balanced.value
         curValues = [
-            self._modeSwitch.getChecked(),
+            modeToSave,
             self._thermalCPU.getSpeedSlider(),
             self._thermalGPU.getSpeedSlider(),
             self.FAILSAFE_CPU_TEMP,
@@ -463,7 +484,7 @@ class TCC_GUI(QtWidgets.QWidget):
             return
         self._prevSavedSettingsValues = curValues
 
-        self.settings.setValue(SettingsKey.Mode.value, self._modeSwitch.getChecked())
+        self.settings.setValue(SettingsKey.Mode.value, modeToSave)
         self.settings.setValue(SettingsKey.CPUFanSpeed.value, self._thermalCPU.getSpeedSlider())
         self.settings.setValue(SettingsKey.GPUFanSpeed.value, self._thermalGPU.getSpeedSlider())
         self.settings.setValue(SettingsKey.CPUThresholdTemp.value, self.FAILSAFE_CPU_TEMP)
@@ -472,7 +493,9 @@ class TCC_GUI(QtWidgets.QWidget):
 
     def _loadAppSettings(self):
         savedMode = self.settings.value(SettingsKey.Mode.value)
-        if savedMode not in [m.value for m in ThermalMode]:
+        # G-mode is a temporary boost, not a preference: restoring it at boot is why the
+        # machine came back up with the fans screaming (issue #92).
+        if savedMode not in [m.value for m in ThermalMode] or savedMode == ThermalMode.G_Mode.value:
             savedMode = ThermalMode.Balanced.value
         self._modeSwitch.setChecked(savedMode)
         savedSpeed = self.settings.value(SettingsKey.CPUFanSpeed.value)

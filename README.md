@@ -116,6 +116,15 @@ Big thanks to the amazing people who have contributed to the project:
 
 ## Changelog
 
+- 1.7.0 (fork)
+  - Fix: "Balanced" no longer silently falls back to Custom when the firmware rejects the USTT probe
+  - Fix: G-mode is not restored on startup anymore (after a reboot the fans came up at full blast)
+  - Fix: implausible GPU readings (2-3 °C) are treated as missing data instead of tripping the fail-safe
+  - Fix: invalid WMI answers (this board answers -2) are rejected instead of shown as a value
+  - Fix: WMI handshake retries at startup and clears a stale COM cache left by an uninstalled AWCC
+  - Fix: timer cleanup on exit used the wrong object
+  - Add: fork credits in the About dialog
+
 - 1.6.5
   - Update dependencies (dev)
   - Update imports (dev)

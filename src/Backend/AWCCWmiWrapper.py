@@ -75,7 +75,9 @@ class AWCCWmiWrapper:
             if self._balancedModePatch is None:
                 self._balancedModePatch = self._USTT_Balanced if self._Thermal_Control(self._USTT_Balanced) else False
                 print(f'Balanced mode patch: {self._balancedModePatch}')
-            if isinstance(self._balancedModePatch, int):
+            # bool is a subclass of int, so the "probe failed" marker (False) used to
+            # pass this check and send mode 0 (Custom) when the user asked for Balanced.
+            if type(self._balancedModePatch) is int:
                 value = self._balancedModePatch
 
         return self._Thermal_Control(value)
@@ -94,6 +96,7 @@ class AWCCWmiWrapper:
         if not hasattr(self._awcc, method) or not callable(getattr(self._awcc, method)):
             return None
         val: int = getattr(self._awcc, method)(arg)[0]
-        if not isinstance(val, int) or val == -1 or val == 0xFFFFFFFF: 
+        # G15 5530 answers -2 (not just -1) for unsupported queries like GetFanRPMPercent
+        if not isinstance(val, int) or val < 0 or val == 0xFFFFFFFF:
             return None
         return val
