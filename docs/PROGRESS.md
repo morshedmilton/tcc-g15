@@ -75,11 +75,27 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 
 ---
 
-## Phase 4 — Foundation ⬜ PENDING
+## Phase 4 — Foundation 🔄 PARTIAL
 
----
+| Item | Status |
+|---|---|
+| `tools/check_env.py` as the hardware-free regression suite (12 assertions) | ✅ |
+| `tests/` + pytest + ruff + mypy + CI workflow | ⬜ |
+| CONTRIBUTING / SECURITY / CODE_OF_CONDUCT / issue templates | ⬜ |
+| Diagnostics bundle (one-click bug report) | ⬜ |
 
-## Phase 5 — Loop Engineering ⬜ PENDING
+## Phase 5 — Loop Engineering 🔄 IN PROGRESS
+
+| Item | Status | Evidence |
+|---|---|---|
+| Quiet + Performance profiles | ✅ shipped | `docs/WMI_MAP.md` measured table, commit c918f23 |
+| Mode id resolution per firmware (no more fixed ids) | ✅ | `check_env.py` covers USTT + legacy + unsupported + Custom(0) |
+| Watchdog (restore Balanced on crash/kill/sleep) | ⬜ next | — |
+| SMBIOS whitelist | ⬜ | — |
+| NVML GPU temperature | ⬜ | NVML verified working (61 °C) |
+| Wakeup reduction (21.5 → ≤6 /s) | ⬜ | baseline measured |
+| Honest fan UI (BIOS floor / slider max) | ⬜ | — |
+| Reliable autostart | ⬜ | — |
 
 ---
 
@@ -109,6 +125,7 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 
 ## Next Actions (Immediate)
 
-1. Gate 1 approval (stack, privilege, Must list, hardware-test permission)
-2. Phase 4 foundation: tests/, CI, CONTRIBUTING, issue templates, diagnostics bundle
-3. Phase 5 first item: watchdog + wakeup reduction (largest safety and efficiency wins)
+1. Phase 5: watchdog process + SMBIOS whitelist + NVML GPU temp (safety first)
+2. Phase 5: batched polling to cut wakeups from 21.5/s
+3. Phase 4: pytest/CI + issue templates + diagnostics bundle
+4. Then 1.8.0-beta1 build + Gate 2 evidence pack

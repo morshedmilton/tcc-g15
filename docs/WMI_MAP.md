@@ -35,7 +35,7 @@ GetFanRPMPercent   : returns -2  → unsupported on this board
 | Capability | AWCC | upstream tcc-g15 | On 5530, verified | Verdict |
 |---|---|---|---|---|
 | Thermal mode: Balanced / Custom / G | ✅ | ✅ | ✅ app runs, mode applies | **done** |
-| Thermal mode: Quiet / Performance / FullSpeed | ✅ | ❌ | enum exists (`150/152/153`, USTT `160–165`) but never exercised here | **feasible — needs a hardware test** |
+| Thermal mode: Quiet / Performance / FullSpeed | ✅ | ❌ | ✅ **verified**: only the USTT ids answer 0 — Quiet `0xA3` (fans 3900→1753 rpm), Performance `0xA1` (→2162 rpm). Plain `150/152/153` are rejected. `USTT_Cool 162` and `USTT_FullSpeed 164` rejected too. | **shipped (Quiet + Performance)**, FullSpeed not exposed by this firmware |
 | Fan RPM read | ✅ | ✅ | ✅ 3826 / 4013 rpm | **done** |
 | Fan speed set (offset over BIOS curve) | ✅ | ✅ | ✅ (BIOS floor ≈70 % / ≥3000 rpm) | **done, floor must be surfaced in UI** |
 | Fan RPM percent read | ✅ | partial | ❌ returns -2 | **not exposed — stop pretending it works** |
@@ -58,3 +58,18 @@ GetFanRPMPercent   : returns -2  → unsupported on this board
 3. **Quiet/Performance are plausible but unproven.** They must be tested once on hardware (with the fail-safe armed) before shipping, or be shipped behind a "experimental" label.
 4. **Lighting and TDP/OC stay out of v1.** The methods exist; the risk and the verification cost do not pay for themselves yet.
 5. Everything else the app needs (temps, RPM, mode, fan offset) is available and already proven on this machine.
+
+## Measured on 2026-11-03 (`tools/mode_probe.py`, elevated)
+
+| requested mode | id | firmware answer | effect |
+|---|---|---|---|
+| Quiet | 150 | rejected (-1) | none |
+| Performance | 152 | rejected (-1) | none |
+| FullSpeed | 153 | rejected (-1) | none |
+| USTT_Quiet | 163 | **0 (accepted)** | fans 3900 → 1753 rpm |
+| USTT_Performance | 161 | **0 (accepted)** | fans 3900 → 2162 rpm |
+| USTT_Cool | 162 | rejected (-1) | none |
+| USTT_FullSpeed | 164 | rejected (-1) | none |
+| G_Mode | 171 | **0 (accepted)** | fans → 5080 rpm |
+
+So this firmware's real mode set is **Custom(0), USTT_Balanced(160), USTT_Performance(161), USTT_Quiet(163), G_Mode(171)**. The app now resolves the id on first use and caches it, so the same build still works on older boards that want 150/152.
