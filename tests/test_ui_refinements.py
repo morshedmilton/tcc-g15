@@ -107,6 +107,7 @@ def test_no_double_slash_prefix_and_hardware_vector_icons(qapp):
     arcGpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
     arcGpuWidget.setTitle("Intel Arc A730M Graphics")
     assert arcGpuWidget._icon._type == "GPU"
+    assert arcGpuWidget._title.text() == "ARC A730M"
 
     # AMD Ryzen with Radeon Graphics auto-detection without explicit hardwareType
     ryzenApuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType=None)
@@ -118,9 +119,17 @@ def test_no_double_slash_prefix_and_hardware_vector_icons(qapp):
     ryzenHsWidget.setTitle("AMD Ryzen 7 7840HS")
     assert ryzenHsWidget._title.text() == "R7 7840HS"
 
+    ryzenAiWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
+    ryzenAiWidget.setTitle("AMD Ryzen AI 9 HX 370")
+    assert ryzenAiWidget._title.text() == "R9 370"
+
     ultraCpuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
     ultraCpuWidget.setTitle("Intel Core Ultra 7 155H")
     assert ultraCpuWidget._title.text() == "U7 155H"
+
+    intelSpaceWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
+    intelSpaceWidget.setTitle("13th Gen Intel Core i7 13650HX")
+    assert intelSpaceWidget._title.text() == "I7-13650HX"
 
 
 def test_cybergauge_cyberpunk_neon_identity(qapp):
@@ -258,3 +267,29 @@ def test_compact_window_width_between_360_and_400(qapp):
                 TCC_GUI._startWatchdog = orig_watchdog
     finally:
         HotKey.start = orig_start
+
+
+def test_detect_hardware_thread_safety():
+    """DetectHardware initializes COM properly in secondary threads without throwing uninitialized COM errors."""
+    import threading
+    from Backend.DetectHardware import DetectHardware
+
+    res = {}
+    err = None
+
+    def worker():
+        nonlocal err
+        try:
+            d = DetectHardware()
+            res["model"] = d.getModelName()
+            res["cpu"] = d.getHardwareName(d.CPUFanIdx)
+            res["gpu"] = d.getHardwareName(d.GPUFanIdx)
+        except Exception as e:
+            err = e
+
+    t = threading.Thread(target=worker)
+    t.start()
+    t.join(timeout=5)
+    assert err is None, f"DetectHardware raised in worker thread: {err}"
+    assert "cpu" in res
+

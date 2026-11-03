@@ -16,6 +16,11 @@ class DetectHardware:
     GPUFanIdx = 1
 
     def __init__(self) -> None:
+        try:
+            import pythoncom
+            pythoncom.CoInitialize()
+        except Exception:
+            pass
         self._wmi = WMI()
 
     def getModelName(self) -> Optional[str]:
@@ -36,13 +41,19 @@ class DetectHardware:
         return os.environ.get(ALLOW_UNSUPPORTED_ENV, '') not in ('', '0')
 
     def getHardwareName(self, fanIdx: int) -> Optional[str]:
-        if fanIdx == self.CPUFanIdx:
-            wmiClass = self._wmi.Win32_Processor
-            wmiInst = wmiClass()[0]
-            return wmiInst.Name.strip() if hasattr(wmiInst, 'Name') else None
-        elif fanIdx == self.GPUFanIdx:
-            wmiClass = self._wmi.Win32_VideoController
-            wmiInst = max(wmiClass(), key=lambda inst: inst.AdapterRAM & 0xFFFFFFFF if hasattr(inst, 'AdapterRAM') and isinstance(inst.AdapterRAM, int) else 0) # Assume the one with the largest memory is the main GPU
-            return wmiInst.Name.strip() if hasattr(wmiInst, 'Name') else None
-        else:
+        try:
+            if fanIdx == self.CPUFanIdx:
+                wmiClass = self._wmi.Win32_Processor
+                wmiInst = wmiClass()[0]
+                return wmiInst.Name.strip() if hasattr(wmiInst, 'Name') else None
+            elif fanIdx == self.GPUFanIdx:
+                wmiClass = self._wmi.Win32_VideoController
+                controllers = wmiClass()
+                if not controllers:
+                    return None
+                wmiInst = max(controllers, key=lambda inst: inst.AdapterRAM & 0xFFFFFFFF if hasattr(inst, 'AdapterRAM') and isinstance(inst.AdapterRAM, int) else 0) # Assume the one with the largest memory is the main GPU
+                return wmiInst.Name.strip() if hasattr(wmiInst, 'Name') else None
+            else:
+                return None
+        except Exception:
             return None

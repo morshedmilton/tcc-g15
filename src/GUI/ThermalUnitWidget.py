@@ -239,7 +239,12 @@ class ThermalUnitWidget(QtWidgets.QFrame):
             elif "RADEON" in upper:
                 display_title = "RADEON"
             elif "ARC" in upper:
-                display_title = "ARC GPU"
+                idx = upper.find("ARC")
+                parts = clean_title[idx:].split()
+                if len(parts) >= 2 and parts[1].upper().startswith("A"):
+                    display_title = f"ARC {parts[1]}".upper()
+                else:
+                    display_title = "ARC GPU"
             else:
                 display_title = "GPU"
         elif is_cpu:
@@ -257,13 +262,18 @@ class ThermalUnitWidget(QtWidgets.QFrame):
                 border-radius: 2px;
             """)
             import re
-            m = re.search(r'(i[3579]-\w+|Ultra\s*\d+\s*\w*|Ryzen\s*\d+\s*\w*)', clean_title, re.IGNORECASE)
+            m = re.search(r'(i[3579][-\s]\w+|Ultra\s*\d+\s*\w*|Ryzen\s*(?:AI\s*)?[3579]\s*(?:HX\s*)?\w+)', clean_title, re.IGNORECASE)
             if m:
                 raw = m.group(1)
-                if re.match(r'Ryzen\s*[3579]\s*\w+', raw, re.IGNORECASE):
-                    display_title = re.sub(r'Ryzen\s*([3579])\s*', r'R\1 ', raw, flags=re.IGNORECASE).upper()
-                elif re.match(r'Ultra\s*[3579]\s*\w+', raw, re.IGNORECASE):
-                    display_title = re.sub(r'Ultra\s*([3579])\s*', r'U\1 ', raw, flags=re.IGNORECASE).upper()
+                if re.match(r'Ryzen\s*(?:AI\s*)?([3579])\s*(?:HX\s*)?(\w+)', raw, re.IGNORECASE):
+                    rm = re.match(r'Ryzen\s*(?:AI\s*)?([3579])\s*(?:HX\s*)?(\w+)', raw, re.IGNORECASE)
+                    display_title = f"R{rm.group(1)} {rm.group(2)}".upper()
+                elif re.match(r'Ultra\s*([3579])\s*(\w+)', raw, re.IGNORECASE):
+                    um = re.match(r'Ultra\s*([3579])\s*(\w+)', raw, re.IGNORECASE)
+                    display_title = f"U{um.group(1)} {um.group(2)}".upper()
+                elif re.match(r'i([3579])[-\s](\w+)', raw, re.IGNORECASE):
+                    im = re.match(r'i([3579])[-\s](\w+)', raw, re.IGNORECASE)
+                    display_title = f"I{im.group(1)}-{im.group(2)}".upper()
                 else:
                     display_title = raw.upper()
             else:

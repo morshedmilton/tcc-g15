@@ -38,7 +38,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: ".\dist\tcc-g15\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: ".\dist\tcc-g15\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: ".\dist\tcc-watchdog.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: ".\dist\tcc-g15\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "tcc-watchdog.exe"
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

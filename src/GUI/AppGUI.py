@@ -384,14 +384,26 @@ class TCC_GUI(QtWidgets.QWidget):
                 self.finished.connect(self._t.quit)
                 self.finished.connect(on_result)
                 self._t.started.connect(self._task)
-                self._t.start()
+
             def _task(self):
-                d = DetectHardware()
-                gpuModel = d.getHardwareName(d.GPUFanIdx)
-                cpuModel = d.getHardwareName(d.CPUFanIdx)
-                self.finished.emit(gpuModel, cpuModel)
+                try:
+                    import pythoncom
+                    pythoncom.CoInitialize()
+                    try:
+                        d = DetectHardware()
+                        gpuModel = d.getHardwareName(d.GPUFanIdx) or ""
+                        cpuModel = d.getHardwareName(d.CPUFanIdx) or ""
+                        self.finished.emit(gpuModel, cpuModel)
+                    finally:
+                        pythoncom.CoUninitialize()
+                except Exception as ex:
+                    import logging
+                    logging.getLogger("tcc-g15").warning("Hardware detection worker failed: %s", ex)
+
             def start(self):
-                self._t.start()
+                if not self._t.isRunning():
+                    self._t.start()
+
         detect = DetectCpuGpuModelsWorker(self, self.updateGaugeTitles)
         self._detectWorker = detect
         detect.start()
