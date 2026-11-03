@@ -2,15 +2,75 @@ from typing import Callable, Optional, Tuple
 from PySide6 import QtCore, QtWidgets, QtGui
 from GUI.CyberGauge import CyberGauge
 
+class HardwareIcon(QtWidgets.QWidget):
+    """Clean Cyberpunk Hardware Vector Icon for CPU and GPU."""
+    def __init__(self, hardware_type: str = 'CPU', parent: Optional[QtWidgets.QWidget] = None):
+        super().__init__(parent)
+        self._type = hardware_type.upper()
+        self.setFixedSize(14, 14)
+
+    def setType(self, hardware_type: str):
+        self._type = hardware_type.upper()
+        self.update()
+
+    def paintEvent(self, event: QtGui.QPaintEvent):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        w = float(self.width())
+        h = float(self.height())
+
+        if "GPU" in self._type:
+            # Clean GPU Vector Icon: graphics board with PCIe edge, heatsink, and dual cooler fans
+            color = QtGui.QColor("#00F0FF")
+            pen = QtGui.QPen(color, 1.2)
+            painter.setPen(pen)
+            # Main board outline
+            painter.drawRoundedRect(QtCore.QRectF(1.0, 2.0, w - 2.0, h - 4.5), 1.0, 1.0)
+            # PCIe connector pins on bottom
+            painter.drawLine(QtCore.QPointF(3.0, h - 2.5), QtCore.QPointF(w - 3.0, h - 2.5))
+            painter.drawLine(QtCore.QPointF(4.0, h - 1.5), QtCore.QPointF(7.0, h - 1.5))
+            # Dual cooler fan circles
+            painter.setPen(QtGui.QPen(color, 1.0))
+            painter.drawEllipse(QtCore.QPointF(w * 0.35, h * 0.45), 2.0, 2.0)
+            painter.drawEllipse(QtCore.QPointF(w * 0.68, h * 0.45), 2.0, 2.0)
+        else:
+            # Clean CPU Vector Icon: square chip package with center core die and contact pins
+            color = QtGui.QColor("#00FF66")
+            pen = QtGui.QPen(color, 1.2)
+            painter.setPen(pen)
+            # Outer chip package
+            painter.drawRoundedRect(QtCore.QRectF(2.5, 2.5, w - 5.0, h - 5.0), 1.0, 1.0)
+            # Center core die
+            painter.fillRect(QtCore.QRectF(4.8, 4.8, w - 9.6, h - 9.6), QtGui.QBrush(color))
+            # Contact pins (top, bottom, left, right)
+            painter.setPen(QtGui.QPen(color, 1.0))
+            # Top pins
+            painter.drawLine(QtCore.QPointF(4.5, 0.8), QtCore.QPointF(4.5, 2.2))
+            painter.drawLine(QtCore.QPointF(w - 4.5, 0.8), QtCore.QPointF(w - 4.5, 2.2))
+            # Bottom pins
+            painter.drawLine(QtCore.QPointF(4.5, h - 2.2), QtCore.QPointF(4.5, h - 0.8))
+            painter.drawLine(QtCore.QPointF(w - 4.5, h - 2.2), QtCore.QPointF(w - 4.5, h - 0.8))
+            # Left pins
+            painter.drawLine(QtCore.QPointF(0.8, 4.5), QtCore.QPointF(2.2, 4.5))
+            painter.drawLine(QtCore.QPointF(0.8, h - 4.5), QtCore.QPointF(2.2, h - 4.5))
+            # Right pins
+            painter.drawLine(QtCore.QPointF(w - 2.2, 4.5), QtCore.QPointF(w - 0.8, 4.5))
+            painter.drawLine(QtCore.QPointF(w - 2.2, h - 4.5), QtCore.QPointF(w - 0.8, h - 4.5))
+
+        painter.end()
+
+
 class ThermalUnitWidget(QtWidgets.QFrame):
     def __init__(self, parent: Optional[QtWidgets.QWidget], tempMinMax: Tuple[int,int], tempColorLimits: Optional[Tuple[int,int]], fanMinMax: Tuple[int,int], sliderMaxAndTick: Tuple[int,int]):
         super().__init__(parent)
         self.setObjectName("CyberCard")
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
 
-        # Header: Hardware Title + Status Tag
+        # Header: Hardware Vector Icon + Title + Status Tag
+        self._icon = HardwareIcon("CPU", self)
+
         self._title = QtWidgets.QLabel(self)
-        self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.4px;")
+        self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.3px;")
 
         self._tagPill = QtWidgets.QLabel(self)
         self._tagPill.setStyleSheet("""
@@ -19,58 +79,63 @@ class ThermalUnitWidget(QtWidgets.QFrame):
             font-size: 9px;
             font-weight: bold;
             background: rgba(0, 240, 255, 0.12);
-            padding: 1px 5px;
+            padding: 1px 4px;
             border: 1px solid rgba(0, 240, 255, 0.35);
             border-radius: 2px;
         """)
 
         headerLayout = QtWidgets.QHBoxLayout()
         headerLayout.setContentsMargins(0, 0, 0, 1)
+        headerLayout.setSpacing(4)
+        headerLayout.addWidget(self._icon, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         headerLayout.addWidget(self._title, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         headerLayout.addStretch(1)
         headerLayout.addWidget(self._tagPill, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Temp Row: [TEMP] [===CyberGauge===] [ 62 °C ]
         lblTemp = QtWidgets.QLabel("TEMP")
-        lblTemp.setFixedWidth(36)
-        lblTemp.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
+        lblTemp.setFixedWidth(30)
+        lblTemp.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 9px; font-weight: bold;")
 
         self._tempBar = CyberGauge(self, min_val=tempMinMax[0], max_val=tempMinMax[1], unit=' °C')
         if tempColorLimits:
             self._tempBar.setColorLimits(tempColorLimits)
         self._tempBarLabel = self._tempBar.createLabel()
-        self._tempBarLabel.setFixedWidth(46)
+        self._tempBarLabel.setFixedWidth(42)
 
         tempLayout = QtWidgets.QHBoxLayout()
-        tempLayout.setSpacing(5)
+        tempLayout.setSpacing(4)
         tempLayout.addWidget(lblTemp, alignment=QtCore.Qt.AlignVCenter)
         tempLayout.addWidget(self._tempBar, 1, alignment=QtCore.Qt.AlignVCenter)
         tempLayout.addWidget(self._tempBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Fan Row: [TACH] [===CyberGauge===] [ 2700 RPM ]
         lblFan = QtWidgets.QLabel("TACH")
-        lblFan.setFixedWidth(36)
-        lblFan.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
+        lblFan.setFixedWidth(30)
+        lblFan.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 9px; font-weight: bold;")
 
         self._fanBar = CyberGauge(self, min_val=fanMinMax[0], max_val=fanMinMax[1], unit=' RPM')
         self._fanBarLabel = self._fanBar.createLabel()
-        self._fanBarLabel.setFixedWidth(60)
+        self._fanBarLabel.setFixedWidth(54)
 
         fanLayout = QtWidgets.QHBoxLayout()
-        fanLayout.setSpacing(5)
+        fanLayout.setSpacing(4)
         fanLayout.addWidget(lblFan, alignment=QtCore.Qt.AlignVCenter)
         fanLayout.addWidget(self._fanBar, 1, alignment=QtCore.Qt.AlignVCenter)
         fanLayout.addWidget(self._fanBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Custom Fan Speed Offset Slider Row: [OFFS] [===Slider===] [ +0% ]
         self._lblOffset = QtWidgets.QLabel("OFFS")
-        self._lblOffset.setFixedWidth(36)
-        self._lblOffset.setStyleSheet("color: #7D8799; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
+        self._lblOffset.setFixedWidth(30)
+        self._lblOffset.setStyleSheet("color: #7D8799; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 9px; font-weight: bold;")
 
         self._speedSliderCallback = None
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
-        self._speedSlider.setMaximum(sliderMaxAndTick[0])
-        self._speedSlider.setTickInterval(sliderMaxAndTick[1])
+        # Constrain strictly to 0-100% scale (fixing the previous 120 limit)
+        maxVal = min(100, sliderMaxAndTick[0]) if sliderMaxAndTick and sliderMaxAndTick[0] > 0 else 100
+        tickVal = sliderMaxAndTick[1] if sliderMaxAndTick else 20
+        self._speedSlider.setRange(0, maxVal)
+        self._speedSlider.setTickInterval(tickVal)
         self._speedSlider.setTickPosition(QtWidgets.QSlider.NoTicks)
         self._speedSlider.setFixedHeight(14)
         self._speedSlider.setToolTip(
@@ -83,58 +148,83 @@ class ThermalUnitWidget(QtWidgets.QFrame):
         self._speedSlider.valueChanged.connect(self._onSliderMoved)
 
         self._sliderValLabel = QtWidgets.QLabel("+0%")
-        self._sliderValLabel.setFixedWidth(38)
+        self._sliderValLabel.setFixedWidth(36)
         self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold;")
         self._sliderValLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         sliderLayout = QtWidgets.QHBoxLayout()
-        sliderLayout.setSpacing(5)
+        sliderLayout.setSpacing(4)
         sliderLayout.addWidget(self._lblOffset, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._speedSlider, 1, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._sliderValLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Main Card Layout
         cardLayout = QtWidgets.QVBoxLayout(self)
-        cardLayout.setContentsMargins(10, 8, 10, 8)
-        cardLayout.setSpacing(5)
+        cardLayout.setContentsMargins(6, 6, 6, 6)
+        cardLayout.setSpacing(4)
         cardLayout.addLayout(headerLayout)
         cardLayout.addLayout(tempLayout)
         cardLayout.addLayout(fanLayout)
         cardLayout.addLayout(sliderLayout)
 
     def _onSliderMoved(self, val: int):
+        val = max(0, min(100, int(val)))
         self._sliderValLabel.setText(f"+{val}%")
         self._speedSliderDebounce.start()
 
     def setTitle(self, title: str) -> None:
-        self._title.setText(f"// {title.upper()}")
-        upper = title.upper()
+        clean_title = title.replace("//", "").strip()
+        upper = clean_title.upper()
         if "GPU" in upper or "RTX" in upper or "GEFORCE" in upper or "GRAPHICS" in upper:
-            self._tagPill.setText("[ GPU // ACTIVE ]")
+            self._icon.setType("GPU")
+            self._tagPill.setText("[ GPU ACTIVE ]")
             self._tagPill.setStyleSheet("""
                 color: #00F0FF;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
-                font-size: 10px;
+                font-size: 9px;
                 font-weight: bold;
                 background: rgba(0, 240, 255, 0.12);
-                padding: 2px 7px;
+                padding: 1px 4px;
                 border: 1px solid rgba(0, 240, 255, 0.35);
                 border-radius: 2px;
             """)
+            if "RTX" in upper:
+                idx = upper.find("RTX")
+                parts = clean_title[idx:].split()
+                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+            elif "GTX" in upper:
+                idx = upper.find("GTX")
+                parts = clean_title[idx:].split()
+                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+            else:
+                display_title = "GPU"
         elif "CPU" in upper or "CORE" in upper or "INTEL" in upper or "RYZEN" in upper:
-            self._tagPill.setText("[ CPU // ACTIVE ]")
+            self._icon.setType("CPU")
+            self._tagPill.setText("[ CPU ACTIVE ]")
             self._tagPill.setStyleSheet("""
                 color: #00FF66;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
-                font-size: 10px;
+                font-size: 9px;
                 font-weight: bold;
                 background: rgba(0, 255, 102, 0.12);
-                padding: 2px 7px;
+                padding: 1px 4px;
                 border: 1px solid rgba(0, 255, 102, 0.35);
                 border-radius: 2px;
             """)
+            import re
+            m = re.search(r'(i[3579]-\w+|Ryzen\s*\d+\s*\w*)', clean_title, re.IGNORECASE)
+            if m:
+                display_title = m.group(1).upper()
+            else:
+                display_title = "CPU"
         else:
-            self._tagPill.setText("[ UNIT // READY ]")
+            self._icon.setType("CPU")
+            self._tagPill.setText("[ UNIT READY ]")
+            display_title = clean_title[:8].upper() if clean_title else "UNIT"
+
+        self._title.setText(display_title)
+        if clean_title not in ("CPU", "GPU"):
+            self._title.setToolTip(clean_title)
 
     def setTemp(self, temp: int) -> None:
         self._tempBar.setValue(temp)
@@ -154,18 +244,22 @@ class ThermalUnitWidget(QtWidgets.QFrame):
     def setSpeedDisabled(self, disabled: bool) -> None:
         self._speedSlider.setDisabled(disabled)
         if disabled:
-            self._lblOffset.setStyleSheet("color: #4A5262; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
-            self._sliderValLabel.setStyleSheet("color: #4A5262; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
+            self._lblOffset.setStyleSheet("color: #4A5262; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 9px; font-weight: bold;")
+            self._sliderValLabel.setStyleSheet("color: #4A5262; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold;")
         else:
-            self._lblOffset.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
-            self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
+            self._lblOffset.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 9px; font-weight: bold;")
+            self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold;")
 
     def getSpeedSlider(self) -> int:
-        return self._speedSlider.value()
+        return max(0, min(100, int(self._speedSlider.value())))
 
     def setSpeedSlider(self, speed: int) -> None:
-        self._speedSlider.setValue(speed)
-        self._sliderValLabel.setText(f"+{speed}%")
+        try:
+            val = max(0, min(100, int(speed))) if speed is not None else 0
+        except (ValueError, TypeError):
+            val = 0
+        self._speedSlider.setValue(val)
+        self._sliderValLabel.setText(f"+{val}%")
 
     def _onSpeedSliderChange(self) -> None:
         if self._speedSliderCallback:

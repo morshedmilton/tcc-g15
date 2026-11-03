@@ -17,11 +17,11 @@ class QRadioButtonSet(QtWidgets.QWidget):
 
         hLayout = QtWidgets.QHBoxLayout(self)
         hLayout.setContentsMargins(0, 0, 0, 0)
-        hLayout.setSpacing(4)
+        hLayout.setSpacing(2)
 
         if title:
             lbl = QtWidgets.QLabel(title)
-            lbl.setStyleSheet("color: #7D8799; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; margin-right: 2px;")
+            lbl.setStyleSheet("color: #7D8799; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: bold; margin-right: 2px;")
             hLayout.addWidget(lbl)
 
         self._buttonGroup = QtWidgets.QButtonGroup(self)
@@ -38,7 +38,7 @@ class QRadioButtonSet(QtWidgets.QWidget):
             btn = QtWidgets.QPushButton(btnText)
             btn._value = value
             btn.setCheckable(True)
-            btn.setFixedHeight(26)
+            btn.setFixedHeight(24)
             btn.setCursor(QtCore.Qt.PointingHandCursor)
             if "G_MODE" in value or "G-MODE" in btnText:
                 btn.setProperty("isGMode", True)
@@ -53,18 +53,18 @@ class QRadioButtonSet(QtWidgets.QWidget):
                 background: transparent;
             }
             QPushButton {
-                background: rgba(255, 255, 255, 0.06);
+                background: rgba(18, 24, 38, 0.60);
                 color: #A0ACBF;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
-                font-size: 10px;
+                font-size: 9px;
                 font-weight: 700;
-                letter-spacing: 0.3px;
-                padding: 2px 7px;
-                border: 1px solid rgba(255, 255, 255, 0.12);
+                letter-spacing: 0.2px;
+                padding: 2px 4px;
+                border: 1px solid rgba(0, 240, 255, 0.22);
                 border-radius: 3px;
             }
             QPushButton:hover {
-                background: rgba(0, 240, 255, 0.18);
+                background: rgba(0, 240, 255, 0.22);
                 color: #00F0FF;
                 border: 1px solid #00F0FF;
             }

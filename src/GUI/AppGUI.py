@@ -166,48 +166,48 @@ def errorExit(message: str, message2: Optional[str] = None) -> None:
 
 APP_STYLESHEET = """
     QWidget#QMainWindow {
-        background: rgba(10, 14, 22, 0.40);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-top: 1px solid rgba(255, 255, 255, 0.28);
+        background: rgba(10, 14, 22, 0.55);
+        border: 1px solid rgba(0, 240, 255, 0.35);
+        border-top: 2px solid #00F0FF;
         border-radius: 6px;
         font-family: 'Orbitron', 'Cascadia Code', 'Consolas', 'Segoe UI', sans-serif;
     }
 
     QFrame#CyberCard {
-        background: rgba(18, 24, 38, 0.45);
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        border-top: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(16, 22, 34, 0.60);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-top: 2px solid rgba(0, 240, 255, 0.70);
         border-radius: 4px;
     }
 
     QFrame#CyberDeck {
-        background: rgba(16, 20, 32, 0.50);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-top: 1px solid rgba(255, 255, 255, 0.24);
+        background: rgba(14, 18, 28, 0.70);
+        border: 1px solid rgba(0, 240, 255, 0.28);
+        border-top: 1px solid rgba(255, 255, 255, 0.20);
         border-bottom: 2px solid #FCEE0A;
         border-radius: 4px;
     }
 
     QPushButton#CyberSafeButton {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(20, 26, 38, 0.65);
         border: 1px solid rgba(0, 255, 102, 0.35);
         border-radius: 3px;
-        padding: 2px 6px;
+        padding: 2px 4px;
     }
     QPushButton#CyberSafeButton:hover {
-        background: rgba(0, 255, 102, 0.20);
+        background: rgba(0, 255, 102, 0.22);
         border: 1px solid #00FF66;
     }
 
-    /* Cyberpunk Fan Offset Slider */
+    /* Cyberpunk Fan Offset Slider with #00FF66 -> #FCEE0A -> #FF003C Neon Gradient */
     QSlider::groove:horizontal {
         height: 4px;
         background: rgba(255, 255, 255, 0.10);
-        border: 1px solid rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(0, 240, 255, 0.25);
         border-radius: 1px;
     }
     QSlider::sub-page:horizontal {
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00F0FF, stop:1 #FCEE0A);
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00FF66, stop:0.65 #FCEE0A, stop:1 #FF003C);
     }
     QSlider::sub-page:horizontal:disabled {
         background: rgba(255, 255, 255, 0.05);
@@ -215,7 +215,7 @@ APP_STYLESHEET = """
     QSlider::handle:horizontal {
         background: #FCEE0A;
         border: 1px solid #FFFFFF;
-        width: 12px;
+        width: 10px;
         margin-top: -5px;
         margin-bottom: -5px;
         border-radius: 2px;
@@ -347,9 +347,9 @@ class TCC_GUI(QtWidgets.QWidget):
         self.setStyleSheet(APP_STYLESHEET)
 
         # Thermal Unit Widgets
-        self._thermalGPU = ThermalUnitWidget(self, tempMinMax=(0, 95), tempColorLimits=self.GPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(120, 20))
+        self._thermalGPU = ThermalUnitWidget(self, tempMinMax=(0, 95), tempColorLimits=self.GPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20))
         self._thermalGPU.setTitle('GPU')
-        self._thermalCPU = ThermalUnitWidget(self, tempMinMax=(0, 110), tempColorLimits=self.CPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(120, 20))
+        self._thermalCPU = ThermalUnitWidget(self, tempMinMax=(0, 110), tempColorLimits=self.CPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20))
         self._thermalCPU.setTitle('CPU')
 
         self._thermalGPU.setSourceNote(
@@ -377,12 +377,13 @@ class TCC_GUI(QtWidgets.QWidget):
             def start(self):
                 self._t.start()
         detect = DetectCpuGpuModelsWorker(self, self.updateGaugeTitles)
+        self._detectWorker = detect
         detect.start()
 
         # Top row: 2 Frosted Glass Thermal Cards
         lTherm = QtWidgets.QHBoxLayout()
         lTherm.setContentsMargins(0, 0, 0, 0)
-        lTherm.setSpacing(10)
+        lTherm.setSpacing(6)
         lTherm.addWidget(self._thermalGPU)
         lTherm.addWidget(self._thermalCPU)
 
@@ -390,8 +391,8 @@ class TCC_GUI(QtWidgets.QWidget):
         cyberDeck = QtWidgets.QFrame()
         cyberDeck.setObjectName("CyberDeck")
         deckBox = QtWidgets.QHBoxLayout(cyberDeck)
-        deckBox.setContentsMargins(8, 6, 8, 6)
-        deckBox.setSpacing(6)
+        deckBox.setContentsMargins(6, 4, 6, 4)
+        deckBox.setSpacing(4)
 
         # 1. Cyberpunk Tactical Mode Selector
         self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
@@ -402,24 +403,24 @@ class TCC_GUI(QtWidgets.QWidget):
         # 2. Tactical Divider
         techDivider = QtWidgets.QFrame()
         techDivider.setFrameShape(QtWidgets.QFrame.VLine)
-        techDivider.setStyleSheet("background: rgba(0, 240, 255, 0.35); width: 1px; max-width: 1px; margin: 4px 4px;")
+        techDivider.setStyleSheet("background: rgba(0, 240, 255, 0.35); width: 1px; max-width: 1px; margin: 3px 2px;")
         deckBox.addWidget(techDivider)
 
         # 3. Tactical Safeguard Module (Fail-Safe)
         self._failsafeBtn = QtWidgets.QPushButton()
         self._failsafeBtn.setObjectName("CyberSafeButton")
         self._failsafeBtn.setCursor(QtCore.Qt.PointingHandCursor)
-        self._failsafeBtn.setFixedHeight(26)
-        self._failsafeBtn.setMinimumWidth(100)
+        self._failsafeBtn.setFixedHeight(24)
+        self._failsafeBtn.setMinimumWidth(80)
 
         failsafeInner = QtWidgets.QHBoxLayout(self._failsafeBtn)
-        failsafeInner.setContentsMargins(5, 2, 5, 2)
-        failsafeInner.setSpacing(4)
+        failsafeInner.setContentsMargins(4, 2, 4, 2)
+        failsafeInner.setSpacing(3)
 
         failsafeIndicator = QtWidgets.QLabel("▲")
-        failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 10px; font-weight: 900;")
+        failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 9px; font-weight: 900;")
         failsafeLabel = QtWidgets.QLabel("SAFE")
-        failsafeLabel.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.3px;")
+        failsafeLabel.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: 800; letter-spacing: 0.3px;")
         self._failsafeThresholdBadge = QtWidgets.QLabel(f"{self.FAILSAFE_GPU_TEMP}°/{self.FAILSAFE_CPU_TEMP}°")
         self._failsafeThresholdBadge.setStyleSheet("""
             color: #000000;
@@ -427,7 +428,7 @@ class TCC_GUI(QtWidgets.QWidget):
             font-family: 'Orbitron', monospace;
             font-size: 9px;
             font-weight: bold;
-            padding: 1px 4px;
+            padding: 1px 3px;
             border-radius: 2px;
         """)
 
@@ -512,8 +513,8 @@ class TCC_GUI(QtWidgets.QWidget):
 
         # Main window layout: 2 rows only! Compact Cyberpunk HUD Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
-        mainLayout.setContentsMargins(8, 8, 8, 8)
-        mainLayout.setSpacing(6)
+        mainLayout.setContentsMargins(6, 6, 6, 6)
+        mainLayout.setSpacing(5)
         mainLayout.addLayout(lTherm)
         mainLayout.addWidget(cyberDeck)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
@@ -719,6 +720,12 @@ class TCC_GUI(QtWidgets.QWidget):
         if self._updateGaugesTask is not None:
             self._updateGaugesTask.stop()
         self._stopWatchdog()
+        if getattr(self, '_detectWorker', None) is not None:
+            try:
+                self._detectWorker._t.quit()
+                self._detectWorker._t.wait(500)
+            except Exception:
+                pass
         if getattr(self, '_gpuTemp', None) is not None:
             self._gpuTemp.shutdown()
 
@@ -906,9 +913,11 @@ def runApp(startMinimized=False) -> int:
     # Apply Windows 11 DWM dark titlebar and Acrylic glass
     applyWindowsGlassAndDarkTheme(int(mainWindow.winId()))
 
-    # Compact window fitting
+    # Compact window fitting strictly between 360px and 400px
     mainWindow.adjustSize()
-    mainWindow.setFixedSize(mainWindow.sizeHint())
+    hint = mainWindow.sizeHint()
+    targetWidth = max(360, min(400, hint.width()))
+    mainWindow.setFixedSize(targetWidth, hint.height())
 
     if startMinimized:
         mainWindow.showMinimized()
