@@ -10,9 +10,10 @@ from GUI.AppColors import Colors
 from GUI.ThermalUnitWidget import ThermalUnitWidget
 from GUI.QGaugeTrayIcon import QGaugeTrayIcon
 from GUI import HotKey
-from GUI import Diagnostics
 from Backend.DetectHardware import DetectHardware, ALLOW_UNSUPPORTED_ENV, SUPPORTED_MODELS
 from Backend.GpuTemp import GpuTemperature
+# GUI.Diagnostics is imported lazily in createBugReport(): it pulls zipfile/urllib and is only
+# needed when someone actually files a bug.
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
@@ -130,7 +131,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.7.0"
+    APP_VERSION = "1.8.0-beta1"
     APP_DESCRIPTION = "This app is an open-source replacement for Alienware Control Center "
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app and AWCC WMI research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -548,6 +549,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
     def createBugReport(self) -> None:
         try:
+            from GUI import Diagnostics
             zipPath, url = Diagnostics.build(self.APP_NAME, self.APP_VERSION)
         except Exception as ex:
             alert("Diagnostics failed", f"{type(ex).__name__}: {ex}", QtWidgets.QMessageBox.Icon.Critical)

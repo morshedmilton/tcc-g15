@@ -1,0 +1,6 @@
+﻿run at 2026-11-03T11:33:08.3374926+06:00
+window: ok pid=25936
+watchdog exe: running pid 26432
+ram_mb: 112.5 -> 112.5
+threads: 11
+path: C:\Users\morsh\AppData\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae6703014cbe59f58a71e626853184e80c\projects\Default\tcc-g15\dist\tcc-g15\tcc-g15.exe

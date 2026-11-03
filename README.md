@@ -116,10 +116,17 @@ Big thanks to the amazing people who have contributed to the project:
 
 ## Changelog
 
-- Unreleased (fork)
+- 1.8.0-beta1 (fork)
+  - Add: watchdog process that restores Balanced if the app dies (verified: fires 13 s after a force-kill)
   - Add: Quiet and Performance thermal profiles. The firmware id is resolved on first use —
     this board (G15 5530, BIOS 1.36.0) answers only the USTT ids (Quiet `0xA3`, Performance `0xA1`)
     and rejects the plain `150`/`152`, so a fixed id would have silently done nothing.
+  - Add: one-click "Create bug report" — redacted zip plus a prefilled GitHub issue
+  - Add: SMBIOS model check; unknown laptops are refused unless `TCC_ALLOW_UNSUPPORTED=1`
+  - Change: GPU temperature comes from NVML, Dell's WMI sensor is the fallback
+  - Change: poll every 2 s (5 s while hidden) — wakeups 21.5 → 10.5 /s, CPU 0.59 → 0.19 %
+  - Fix: autorun verifies the scheduled task instead of trusting the exit code
+  - Fix: the fan slider tooltip states the BIOS floor instead of implying full range control
   - A profile the firmware rejects is hidden instead of killing the app.
 
 - 1.7.0 (fork)

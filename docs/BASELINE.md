@@ -45,6 +45,23 @@ Observations:
 | Cold start after reboot | requires a reboot | next reboot, 1 line of log |
 | UI responsiveness (frame times) | needs a targeted Qt instrumentation pass | Phase 5, first UI work item |
 
+## New build (1.8.0-beta1) — measured 2026-11-03 11:23
+
+Same machine, same harness, dev build of this fork instead of the installed 1.6.4:
+
+| Metric | 1.6.4 baseline | 1.8.0-beta1 |
+|---|---|---|
+| App CPU (idle) | 0.59 % | **0.19 %** |
+| Wakeups | 21.5 /s | **10.5 /s** (2 s poll; 5 s when the window is hidden) |
+| GPU temp source | Dell WMI sensor (bogus 2–3 °C bug) | **NVML** (falls back to WMI) |
+| Watchdog | none | **fires 13 s after a force-kill, restores Balanced** |
+| Modes | Custom / Balanced / G | **+ Quiet, + Performance** (verified ids) |
+
+RAM is not comparable across the two builds: the installed app runs as a frozen PyInstaller exe
+(21–28 MB steady) while the dev build runs under the venv interpreter (~76–119 MB, stable, no
+leak — measured 119 → 111 MB over 60 s with a flat handle count). The packaged build is the
+one to compare, and that is Phase 6 work.
+
 ## Conclusions that drive Gate 1
 
 1. **The Python/PySide6 stack is not the problem.** 0.6 % CPU and 27 MB RAM is already better than most Electron tray apps. A Rust rewrite would buy maybe 20 MB and 0.3 % CPU — **not worth** the contributor cost. → ADR-003 resolves to *stay Python*, and spend the effort on polling efficiency and correctness instead.
