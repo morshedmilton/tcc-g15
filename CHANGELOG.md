@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub Actions CI Workflow:** Automated linting, testing, and artifact build pipeline.
 
 ### Changed
+- **Apple Liquid Glass UI/UX Overhaul:** Re-engineered the interface inspired by Linear and Apple Notes. Integrated Windows 11 DWM dark title bar and Acrylic frosted glass backdrop (`#0e1015`, specular top highlights), macOS/Linear segmented pill selector for thermal modes, glowing jewel LED indicator for fail-safe status, and sleek rounded 8px glass pill gauges.
 - **Ultra-Compact UI Restoration:** Restored the sleek, compact two-row window layout from original upstream, eliminating extra rows and oversized blank margins while accommodating all 5 modes and fail-safe controls on a single row.
+- **Removed Redundant Secondary Labels:** Cut taglines, helper text, and secondary labels (e.g. removed redundant "Fan Speed" text; fan slider spans full width seamlessly).
 - **Zero UI Wakeup Optimization:** Removed continuous 30ms animation timer to ensure minimal CPU load (<0.20% CPU idle) and reduced wakeups (from 21.5/s down to ~10/s).
 - **Fail-Safe Robustness:** Reinforced fail-safe logic with an 8-second debounce to ignore transient spikes, plus an un-bypassable hard safety threshold at 100°C CPU / 90°C GPU.
 

@@ -12,28 +12,66 @@ class QRadioButtonSet(QtWidgets.QWidget):
         if len(options) == 0:
             raise RuntimeError('"options" list length can not be 0')
 
-        # A default argument here used to be a single shared QHBoxLayout instance, so every
-        # QRadioButtonSet in the process reparented its buttons into the same layout.
+        self.setObjectName('SegmentedControl')
+
         if layout is None:
             layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(10)
+        layout.setContentsMargins(3, 3, 3, 3)
+        layout.setSpacing(2)
         self.setLayout(layout)
 
         if title:
-            layout.addWidget(QtWidgets.QLabel(title))
+            lbl = QtWidgets.QLabel(title)
+            lbl.setStyleSheet("color: #8b92a0; font-size: 11px; font-weight: 500; margin-right: 4px;")
+            layout.addWidget(lbl)
 
         self._userCallback = None
         self._buttons = {}
         for label, value in options:
             rb = QtWidgets.QRadioButton(label)
             rb._value = value
-            rb.setMinimumHeight(22)
+            rb.setFixedHeight(26)
             rb.setCursor(QtCore.Qt.PointingHandCursor)
             layout.addWidget(rb)
             self._buttons[value] = rb
             rb.setChecked(True)
             rb.toggled.connect(self._onClicked)
+
+        # Style as Apple/Linear segmented liquid glass pill
+        self.setStyleSheet("""
+            QWidget#SegmentedControl {
+                background: rgba(0, 0, 0, 0.40);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 8px;
+            }
+            QRadioButton {
+                color: #8e95a5;
+                font-size: 11px;
+                font-weight: 500;
+                padding: 4px 10px;
+                border-radius: 6px;
+                border: 1px solid transparent;
+                background: transparent;
+            }
+            QRadioButton::indicator {
+                width: 0px;
+                height: 0px;
+            }
+            QRadioButton:hover {
+                color: #f5f5f7;
+                background: rgba(255, 255, 255, 0.06);
+            }
+            QRadioButton:checked {
+                color: #ffffff;
+                font-weight: 600;
+                background: rgba(255, 255, 255, 0.14);
+                border: 1px solid rgba(255, 255, 255, 0.20);
+            }
+            QRadioButton:disabled {
+                color: #4a5060;
+                background: transparent;
+            }
+        """)
 
     def setChecked(self, value: str):
         button = self._buttons.get(value)

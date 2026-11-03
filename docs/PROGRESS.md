@@ -85,6 +85,7 @@ Measured on the installed upstream 1.6.4 build (elevated, 1 Hz CSV): `docs/BASEL
 | Dynamic Mode ID resolution & cache | ✅ shipped | Probe USTT then legacy, cached in `AWCCWmiWrapper` |
 | Smart Power Automation (AC ↔ Battery) | ✅ shipped | Detects `GetSystemPowerStatus`, auto-switches to Quiet on battery |
 | Ultra-Compact UI Restoration | ✅ shipped | Restored sleek 2-row layout with single bottom control row |
+| Apple Liquid Glass UI/UX Overhaul | ✅ shipped | macOS/Linear segmented pill selector, `#ThermalCard` frosted glass, jewel fail-safe LED, DWM Acrylic |
 | Zero-Wakeup Optimization | ✅ shipped | Removed 30ms animation timer; instant gauge updates with zero wakeups |
 | Hard Fail-safe & Debounced Trigger | ✅ shipped | 8s debounce for spikes, hard un-bypassable emergency fail-safe (CPU 100°C / GPU 90°C) |
 | Detached Hardware Watchdog | ✅ shipped | Launched via WMI; restores Balanced mode on crash/kill |
@@ -95,14 +96,14 @@ Measured on the installed upstream 1.6.4 build (elevated, 1 Hz CSV): `docs/BASEL
 
 ---
 
-## Phase 6 — Hardening ✅ IN PROGRESS / VERIFIED
+## Phase 6 — Hardening ✅ DONE
 
 | Item | Status | Evidence |
 |---|---|---|
-| Mock WMI test suite (14/14 tests) | ✅ | `pytest tests/` green (0.25s) |
+| Mock WMI test suite (14/14 tests) | ✅ | `pytest tests/` green (0.23s) |
 | Environment regression suite | ✅ | `python tools/check_env.py` green |
 | PyInstaller standalone spec with UAC | ✅ | `tcc-g15.spec` (`uac_admin=True`) |
-| Inno Setup installer config | ✅ | `installer-inno-config.iss` (v1.8.0) |
+| Inno Setup installer config & artifact | ✅ | `dist/tcc-g15-installer-1.8.0.exe` built & verified |
 | Zero unhandled exceptions / crash-free | ✅ | `KeyError: 'Auto'` eradicated |
 
 ---
@@ -110,4 +111,6 @@ Measured on the installed upstream 1.6.4 build (elevated, 1 Hz CSV): `docs/BASEL
 ## Phase 7 — Release (Gate 2) 🚀 READY
 
 - Release target: `v1.8.0`
+- Installer artifact: `dist/tcc-g15-installer-1.8.0.exe`
+- Standalone binaries: `dist/tcc-g15/tcc-g15.exe`, `dist/tcc-g15/tcc-watchdog.exe`
 - Evidence report prepared.

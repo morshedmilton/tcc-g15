@@ -2,13 +2,14 @@ from enum import Enum
 from typing import Tuple
 
 class Colors(Enum):
-    DARK_GREY   = '#202020'
-    GREY        = '#505050'
-    WHITE       = '#DDDDDD'
-    GREEN       = '#34a853'
-    YELLOW      = '#f1c232'
-    RED         = '#f44336'
-    BLUE        = '#1A6497'
+    DARK_GREY   = '#0e1015'
+    GREY        = '#3a3f4d'
+    WHITE       = '#f5f5f7'
+    GREEN       = '#30d158'
+    YELLOW      = '#ffd60a'
+    RED         = '#ff453a'
+    BLUE        = '#0a84ff'
+    CYAN        = '#5ac8fa'
     
     def rgb(self) -> Tuple[int, int, int]:
         color = self.value.lstrip('#')

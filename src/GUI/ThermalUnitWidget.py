@@ -6,53 +6,63 @@ from GUI.AppColors import Colors
 class ThermalUnitWidget(QtWidgets.QWidget):
     def __init__(self, parent: Optional[QtWidgets.QWidget], tempMinMax: Tuple[int,int], tempColorLimits: Optional[Tuple[int,int]], fanMinMax: Tuple[int,int], sliderMaxAndTick: Tuple[int,int]):
         super().__init__(parent)
+        self.setObjectName("ThermalCard")
 
         self._title = QtWidgets.QLabel(self)
+        self._title.setStyleSheet("color: #f5f5f7; font-size: 13px; font-weight: 600;")
         self._title.hide()
+
         self._subTitle = QtWidgets.QLabel(self)
+        self._subTitle.setStyleSheet("color: #a1a7b5; font-size: 11px; font-weight: 500;")
         self._subTitle.hide()
         self._subTitle.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         self._subTitle.setToolTip("Triple left-click and Ctrl+C to copy")
 
         self._tempBar, _tempBarLabel = self._makeGaugeWithLabel(tempMinMax, ' °C', tempColorLimits)
-
         self._fanBar, _fanBarLabel = self._makeGaugeWithLabel(fanMinMax, ' RPM')
 
         self._speedSliderCallback = None
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._speedSlider.setMaximum(sliderMaxAndTick[0])
         self._speedSlider.setTickInterval(sliderMaxAndTick[1])
-        self._speedSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self._speedSlider.setTickPosition(QtWidgets.QSlider.NoTicks)
+        self._speedSlider.setFixedHeight(18)
         self._speedSlider.setToolTip(
             "Fan speed offset over the BIOS curve.\n"
-            "The BIOS keeps a floor (about 70 % / 3000 rpm on a G15 5530), so values below it "
-            "change nothing - the firmware still decides the real minimum.")
-        _speedSliderLabel = QtWidgets.QLabel("Fan Speed")
+            "Active in Custom mode. Firmware floor is ~3000 RPM.")
         self._speedSliderDebounce = QtCore.QTimer()
         self._speedSliderDebounce.setInterval(500)
         self._speedSliderDebounce.setSingleShot(True)
         self._speedSliderDebounce.timeout.connect(self._onSpeedSliderChange)
         self._speedSlider.valueChanged.connect(lambda: self._speedSliderDebounce.start())
         
+        # Linear/Apple layout: Clean card with header, metrics, and sleek slider
         grid = QtWidgets.QGridLayout()
-        grid.setContentsMargins(6, 4, 6, 4)
-        grid.setVerticalSpacing(4)
-        grid.setHorizontalSpacing(6)
-        grid.addWidget(self._title,         0, 0, QtCore.Qt.AlignCenter)
-        grid.addWidget(self._subTitle,      1, 0, 1, 2, QtCore.Qt.AlignLeft)
-        grid.addWidget(self._tempBar,       2, 0, QtCore.Qt.AlignTop)
-        grid.addWidget(_tempBarLabel,       2, 1, QtCore.Qt.AlignLeft)
-        grid.addWidget(self._fanBar,        3, 0, QtCore.Qt.AlignTop)
-        grid.addWidget(_fanBarLabel,        3, 1, QtCore.Qt.AlignLeft)
-        grid.addWidget(self._speedSlider,   4, 0, QtCore.Qt.AlignTop)
-        grid.addWidget(_speedSliderLabel,   4, 1, QtCore.Qt.AlignLeft)
+        grid.setContentsMargins(12, 10, 12, 10)
+        grid.setVerticalSpacing(6)
+        grid.setHorizontalSpacing(10)
+
+        # Header
+        grid.addWidget(self._title,         0, 0, 1, 2, QtCore.Qt.AlignLeft)
+        grid.addWidget(self._subTitle,      0, 0, 1, 2, QtCore.Qt.AlignLeft)
+
+        # Temp gauge and readout
+        grid.addWidget(self._tempBar,       1, 0, QtCore.Qt.AlignVCenter)
+        grid.addWidget(_tempBarLabel,       1, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # Fan gauge and readout
+        grid.addWidget(self._fanBar,        2, 0, QtCore.Qt.AlignVCenter)
+        grid.addWidget(_fanBarLabel,        2, 1, QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # Slider spanning across bottom (no redundant "Fan Speed" secondary label)
+        grid.addWidget(self._speedSlider,   3, 0, 1, 2, QtCore.Qt.AlignVCenter)
+
         grid.setColumnStretch(0, 1)
         grid.setColumnStretch(1, 0)
         self.setLayout(grid)
 
     def _makeGaugeWithLabel(self, minMax: Tuple[int,int], units: str, colorLimits: Optional[Tuple[int,int]] = None) -> Tuple[QGauge, QtWidgets.QLabel]:
         g = QGauge()
-        g.setTextVisible(False)
         g.setMinimum(minMax[0])
         g.setMaximum(minMax[1])
         if colorLimits:
@@ -61,7 +71,7 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         return (g, g.createLabel())
     
     def setTitle(self, title: str) -> None:
-        if len(title) < 10:
+        if len(title) < 14:
             self._title.setText(title)
             self._subTitle.hide()
             self._title.show()

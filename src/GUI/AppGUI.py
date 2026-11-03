@@ -13,10 +13,21 @@ from GUI.QGaugeTrayIcon import QGaugeTrayIcon
 from GUI import HotKey
 from Backend.DetectHardware import DetectHardware, ALLOW_UNSUPPORTED_ENV, SUPPORTED_MODELS
 from Backend.GpuTemp import GpuTemperature
-# GUI.Diagnostics is imported lazily in createBugReport()
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
+
+def applyWindowsGlassAndDarkTheme(hwnd: int) -> None:
+    """Enables Windows 11 DWM dark title bar and Acrylic frosted glass backdrop."""
+    try:
+        # DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+        v = ctypes.c_int(1)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(v), 4)
+        # DWMWA_SYSTEMBACKDROP_TYPE = 38 (3 = Acrylic, 2 = Mica)
+        backdrop = ctypes.c_int(3)
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 38, ctypes.byref(backdrop), 4)
+    except Exception:
+        pass
 
 class SYSTEM_POWER_STATUS(ctypes.Structure):
     _fields_ = [
@@ -42,7 +53,6 @@ def getAcPowerStatus() -> Optional[bool]:
     return None
 
 def watchdogCommand(heartbeatPath: str) -> Optional[list]:
-    """The watchdog ships next to the exe when frozen, or as a script when running from source."""
     if getattr(sys, 'frozen', False):
         exe = os.path.join(os.path.dirname(sys.executable), 'tcc-watchdog.exe')
         return [exe, heartbeatPath] if os.path.exists(exe) else None
@@ -124,7 +134,6 @@ class ThermalMode(Enum):
     Quiet = 'Quiet'
     G_Mode = 'G_Mode'
 
-# Native display order
 MODE_ORDER = [ThermalMode.Custom, ThermalMode.Balanced, ThermalMode.Performance, ThermalMode.Quiet, ThermalMode.G_Mode]
 
 class SettingsKey(Enum):
@@ -156,11 +165,10 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
     APP_VERSION = "1.8.0"
-    APP_DESCRIPTION = "This app is an open-source, highly efficient replacement for Alienware Command Center."
+    APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
-    APP_CREDITS = "Original app & AWCC WMI research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
+    APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
 
-    # Color threshold limits (Green -> Yellow -> Red)
     GPU_COLOR_LIMITS = (72, 85)
     CPU_COLOR_LIMITS = (85, 95)
 
@@ -186,10 +194,8 @@ class TCC_GUI(QtWidgets.QWidget):
         super().__init__()
         self._awcc = awcc
         self._gpuTemp = GpuTemperature()
-        print(f'GPU temperature source: {"NVML" if self._gpuTemp.available else "Dell WMI sensor"}')
 
         self.settings = QtCore.QSettings(self.APP_URL, "AWCC")
-        print(f'Settings location: {self.settings.fileName()}')
 
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
@@ -197,7 +203,7 @@ class TCC_GUI(QtWidgets.QWidget):
             alert("About", f"{self.APP_NAME} v{self.APP_VERSION}", message2=f"{self.APP_DESCRIPTION}\n\n{self.APP_CREDITS}")
         )
 
-        # Set up tray icon
+        # Set up tray menu
         self.trayIcon = QGaugeTrayIcon((self.GPU_COLOR_LIMITS, self.CPU_COLOR_LIMITS))
         menu = QtWidgets.QMenu()
         menu.addSection("Mode")
@@ -207,7 +213,7 @@ class TCC_GUI(QtWidgets.QWidget):
             modeAction.triggered.connect(lambda _, m_value=m.value: self._modeSwitch.setChecked(m_value))
             self._trayMenuModeSwitch[m.value] = modeAction
 
-        menu.addSection("Automation")
+        menu.addSection("Power Automation")
         self._batterySwitchAction = menu.addAction("Auto-switch on battery")
         self._batterySwitchAction.setCheckable(True)
         self._batterySwitchAction.setChecked(self._autoBatterySwitch)
@@ -257,12 +263,12 @@ class TCC_GUI(QtWidgets.QWidget):
         self._thermalCPU.setTitle('CPU')
 
         self._thermalGPU.setSourceNote(
-            'GPU temperature: NVIDIA NVML (direct driver)' if self._gpuTemp.available
-            else 'GPU temperature: Dell firmware sensor 6 (WMI)')
+            'GPU: NVIDIA NVML (direct driver)' if self._gpuTemp.available
+            else 'GPU: Dell WMI sensor 6')
         self._thermalCPU.setSourceNote(
-            'CPU temperature: Dell firmware sensor 1 (WMI board sensor). Verified on G15 5530.')
+            'CPU: Dell WMI sensor 1 (firmware board reading)')
 
-        # Detect GPU/CPU models asynchronously without freezing the UI
+        # Detect GPU/CPU models asynchronously
         class DetectCpuGpuModelsWorker(QtCore.QObject):
             finished = QtCore.Signal(str, str)
             def __init__(self, parent: QtCore.QObject, on_result: Callable[[Optional[str], Optional[str]], None]) -> None:
@@ -283,42 +289,53 @@ class TCC_GUI(QtWidgets.QWidget):
         detect = DetectCpuGpuModelsWorker(self, self.updateGaugeTitles)
         detect.start()
 
+        # Top row: 2 Frosted Glass Thermal Cards
         lTherm = QtWidgets.QHBoxLayout()
         lTherm.setContentsMargins(0, 0, 0, 0)
         lTherm.setSpacing(10)
         lTherm.addWidget(self._thermalGPU)
         lTherm.addWidget(self._thermalCPU)
 
-        # Mode Radio Button Set (clean 5 modes)
+        # Bottom row: Left = Segmented Glass Pill Mode Switch, Right = Glass FailSafe Cluster
         self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
 
-        # Fail-safe indicator
+        # Fail-safe Jewel LED dot
         failsafeIndicator = QtWidgets.QLabel()
         def updFailsafeIndicator() -> None:
             color = Colors.GREEN.value if self._failsafeOn else Colors.GREY.value
-            msg = "Normal"
+            glowColor = "rgba(48, 209, 88, 0.5)" if self._failsafeOn else "transparent"
+            msg = "Fail-safe: Armed"
             if self._failsafeTempIsHighTs > 0:
                 color = Colors.YELLOW.value
-                timeStr = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(self._failsafeTempIsHighTs))
-                msg = f"Last high temp at {timeStr}"
+                glowColor = "rgba(255, 214, 10, 0.6)"
+                msg = f"Last high temp: {time.strftime('%H:%M:%S', time.localtime(self._failsafeTempIsHighTs))}"
                 if self._failsafeTrippedPrevModeStr is not None:
                     color = Colors.RED.value
+                    glowColor = "rgba(255, 69, 58, 0.8)"
                     msg = "Fail-safe ACTIVE: G-Mode forced"
-            failsafeIndicator.setStyleSheet(f"QLabel {{ min-height: 14px; min-width: 14px; max-height: 14px; max-width: 14px; border: 1px solid {Colors.GREY.value}; border-radius: 7px; background: {color}; }}")
+            failsafeIndicator.setStyleSheet(f"""
+                QLabel {{
+                    min-height: 10px; min-width: 10px;
+                    max-height: 10px; max-width: 10px;
+                    border-radius: 5px;
+                    background: {color};
+                    border: 1px solid rgba(255, 255, 255, 0.3);
+                }}
+            """)
             failsafeIndicator.setToolTip(msg)
         self._updFailsafeIndicator = updFailsafeIndicator
         updFailsafeIndicator()
 
-        # Fail-safe temp limit combos
+        # Fail-safe combo thresholds
         self._limitTempGPU = QtWidgets.QComboBox()
         self._limitTempGPU.addItems([str(v) for v in range(50, 91)])
-        self._limitTempGPU.setToolTip("Threshold GPU temp (°C)")
-        self._limitTempGPU.setMaximumWidth(55)
+        self._limitTempGPU.setToolTip("GPU limit (°C)")
+        self._limitTempGPU.setFixedWidth(52)
 
         self._limitTempCPU = QtWidgets.QComboBox()
         self._limitTempCPU.addItems([str(v) for v in range(50, 101)])
-        self._limitTempCPU.setToolTip("Threshold CPU temp (°C)")
-        self._limitTempCPU.setMaximumWidth(55)
+        self._limitTempCPU.setToolTip("CPU limit (°C)")
+        self._limitTempCPU.setFixedWidth(52)
 
         def onLimitGPUChange():
             val = self._limitTempGPU.currentText()
@@ -330,9 +347,9 @@ class TCC_GUI(QtWidgets.QWidget):
             if val.isdigit(): self.FAILSAFE_CPU_TEMP = int(val)
         self._limitTempCPU.currentIndexChanged.connect(onLimitCPUChange)
 
-        # Fail-safe checkbox
+        # Fail-safe Checkbox
         self._failsafeCB = QtWidgets.QCheckBox("Fail-safe")
-        self._failsafeCB.setToolTip(f"Switch to G-mode (100% cooling) when GPU reaches {self.FAILSAFE_GPU_TEMP}°C or CPU reaches {self.FAILSAFE_CPU_TEMP}°C.")
+        self._failsafeCB.setToolTip(f"Trip G-mode if GPU >= {self.FAILSAFE_GPU_TEMP}°C or CPU >= {self.FAILSAFE_CPU_TEMP}°C.")
         def onFailsafeCB():
             self._failsafeOn = self._failsafeCB.isChecked()
             self._failsafeTempIsHighTs = 0
@@ -343,32 +360,33 @@ class TCC_GUI(QtWidgets.QWidget):
         self._failsafeCB.toggled.connect(onFailsafeCB)
         self._failsafeCB.setChecked(self._failsafeOn)
 
-        # Fail-safe controls cluster
-        failsafeBox = QtWidgets.QHBoxLayout()
+        # Fail-safe glass cluster frame
+        failsafeFrame = QtWidgets.QFrame()
+        failsafeFrame.setObjectName("FailSafeCluster")
+        failsafeBox = QtWidgets.QHBoxLayout(failsafeFrame)
         failsafeBox.setSpacing(6)
-        failsafeBox.setContentsMargins(0, 0, 0, 0)
+        failsafeBox.setContentsMargins(8, 2, 8, 2)
+        failsafeBox.addWidget(failsafeIndicator)
         failsafeBox.addWidget(self._failsafeCB)
         failsafeBox.addWidget(self._limitTempGPU)
         failsafeBox.addWidget(self._limitTempCPU)
-        failsafeBox.addWidget(failsafeIndicator)
 
-        # Single bottom control row: Mode switches on the left, fail-safe cluster on the right!
+        # Bottom control bar: Single clean horizontal row
         ctrlBox = QtWidgets.QHBoxLayout()
-        ctrlBox.setContentsMargins(4, 2, 4, 2)
+        ctrlBox.setContentsMargins(2, 4, 2, 2)
         ctrlBox.setSpacing(10)
         ctrlBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         ctrlBox.addStretch(1)
-        ctrlBox.addLayout(failsafeBox)
+        ctrlBox.addWidget(failsafeFrame, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Main window layout: 2 rows only! Ultra compact and sleek!
         mainLayout = QtWidgets.QVBoxLayout(self)
-        mainLayout.setContentsMargins(8, 6, 8, 6)
-        mainLayout.setSpacing(4)
+        mainLayout.setContentsMargins(10, 8, 10, 8)
+        mainLayout.setSpacing(8)
         mainLayout.addLayout(lTherm)
         mainLayout.addLayout(ctrlBox)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
 
-        # Set compact size constraints
         self.adjustSize()
 
         # Glue GUI to backend
@@ -376,8 +394,7 @@ class TCC_GUI(QtWidgets.QWidget):
         self._updateGaugesTask = None
 
         def setFanSpeed(fan: Literal['GPU', 'CPU'], speed: int) -> None:
-            res = self._awcc.setFanSpeed(self._awcc.GPUFanIdx if fan == 'GPU' else self._awcc.CPUFanIdx, speed)
-            print(f'Set {fan} fan speed to {speed}: ' + ('ok' if res else 'fail'))
+            self._awcc.setFanSpeed(self._awcc.GPUFanIdx if fan == 'GPU' else self._awcc.CPUFanIdx, speed)
 
         def updateFanSpeed():
             if self._modeSwitch.getChecked() != ThermalMode.Custom.value:
@@ -397,19 +414,16 @@ class TCC_GUI(QtWidgets.QWidget):
 
             modeEnum = getattr(self._awcc.Mode, val, None)
             if modeEnum is None:
-                print(f"Unknown mode {val}")
                 return
 
             res = self._awcc.setMode(modeEnum)
-            print(f'Set mode {val}: ' + ('ok' if res else 'fail'))
             if not res:
                 if val in (ThermalMode.Quiet.value, ThermalMode.Performance.value):
-                    print(f'Mode {val} is not supported here, hiding it')
                     self._modeSwitch.setOptionEnabled(val, False)
                     self._modeSwitch.setChecked(self._lastGoodMode)
-                    self.toasterMessage(["Not supported", f"This firmware has no {val} profile", "Thermal mode"])
+                    self.toasterMessage(["Not supported", f"Firmware has no {val} profile", "Thermal mode"])
                     return
-                self._errorExit(f"Failed to set mode {val}", "Program is terminated")
+                self._errorExit(f"Failed to set mode {val}", "Program terminated")
 
             self._lastGoodMode = val
             if isCustom:
@@ -428,7 +442,7 @@ class TCC_GUI(QtWidgets.QWidget):
         def updateAppState():
             self._touchHeartbeat()
 
-            # NVML reads driver directly, eliminating the Dell WMI 2-3°C bug (#9)
+            # NVML direct driver reading
             nvmlGpu = self._gpuTemp.read()
             gpuTemp = self._saneTemp(nvmlGpu if nvmlGpu is not None else self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx))
             gpuRPM = self._awcc.getFanRPM(self._awcc.GPUFanIdx)
@@ -446,16 +460,14 @@ class TCC_GUI(QtWidgets.QWidget):
                 if ac is not None and self._isAcPower is not None and ac != self._isAcPower:
                     currentMode = self._modeSwitch.getChecked()
                     if not ac:
-                        # Switched to Battery: save AC mode, switch to Quiet to preserve battery & noise
                         if currentMode != ThermalMode.Quiet.value:
                             self._acPreferredMode = currentMode
                             self._modeSwitch.setChecked(ThermalMode.Quiet.value)
-                            self.toasterMessage(["Battery Mode", "Switched to Quiet profile on battery", "Power Profile"])
+                            self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
                     else:
-                        # Switched to AC: restore preferred AC mode
                         if currentMode == ThermalMode.Quiet.value and self._acPreferredMode:
                             self._modeSwitch.setChecked(self._acPreferredMode)
-                            self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile on AC", "Power Profile"])
+                            self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile", "Power Profile"])
                 self._isAcPower = ac
 
             # Fail-Safe Handling
@@ -465,14 +477,12 @@ class TCC_GUI(QtWidgets.QWidget):
             def sensorGone(ts: Optional[float]) -> bool:
                 return ts is not None and (now - ts) > self.FAILSAFE_UNKNOWN_GRACE_SEC
 
-            # Normal user threshold check
             tempIsHigh = (
                 (cpuTemp is not None and cpuTemp >= self.FAILSAFE_CPU_TEMP) or
                 (gpuTemp is not None and gpuTemp >= self.FAILSAFE_GPU_TEMP) or
                 sensorGone(self._cpuUnknownSince) or sensorGone(self._gpuUnknownSince)
             )
 
-            # Hard safety limit (cannot be bypassed, Principle 2a)
             hardTempIsHigh = (
                 (cpuTemp is not None and cpuTemp >= self.FAILSAFE_HARD_CPU_TEMP) or
                 (gpuTemp is not None and gpuTemp >= self.FAILSAFE_HARD_GPU_TEMP)
@@ -484,9 +494,6 @@ class TCC_GUI(QtWidgets.QWidget):
             self._failsafeTempIsHighStartTs = (self._failsafeTempIsHighStartTs or time.time()) if tempIsHigh else None
             self._failsafeHardTempStartTs = (self._failsafeHardTempStartTs or time.time()) if hardTempIsHigh else None
 
-            # Trip conditions:
-            # 1. User failsafe enabled + continuous high temp for debounce period
-            # 2. Hard failsafe emergency (even if unchecked) + hard threshold sustained
             userTrip = (
                 self._failsafeOn and
                 self._modeSwitch.getChecked() != ThermalMode.G_Mode.value and
@@ -505,16 +512,13 @@ class TCC_GUI(QtWidgets.QWidget):
                 self._failsafeTrippedPrevModeStr = self._modeSwitch.getChecked()
                 self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
                 self._toasterMessageCurrentMode(source='failsafe')
-                print(f'Fail-safe tripped (hard={hardTrip}) at GPU={gpuTemp} CPU={cpuTemp}')
 
-            # Auto-reset failsafe
             if (self._failsafeTrippedPrevModeStr is not None and
                 (time.time() - self._failsafeTempIsHighTs) > self.FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC
             ):
                 self._modeSwitch.setChecked(self._failsafeTrippedPrevModeStr)
                 self._toasterMessageCurrentMode(source='failsafe')
                 self._failsafeTrippedPrevModeStr = None
-                print('Fail-safe reset')
 
             # Update tray icon
             self.trayIcon = self.trayIcon.resizeForScreen() or self.trayIcon
@@ -522,7 +526,6 @@ class TCC_GUI(QtWidgets.QWidget):
             tray.setIcon(self.trayIcon)
             tray.setToolTip(f"GPU: {gpuTemp or '--'} °C    {gpuRPM or '--'} RPM\nCPU: {cpuTemp or '--'} °C    {cpuRPM or '--'} RPM\nMode: {self._modeSwitch.getChecked().replace('_', ' ')}")
 
-            # Poll slower when minimized to tray (saves power & wakeups)
             self._updateGaugesTask.setInterval(
                 self.TEMP_UPD_PERIOD_MS if self.isVisible() else self.TEMP_UPD_PERIOD_MS_HIDDEN)
 
@@ -567,7 +570,6 @@ class TCC_GUI(QtWidgets.QWidget):
             self.onExit()
 
     def onExit(self):
-        print("exit")
         prevMode = self._modeSwitch.getChecked()
         self._modeSwitch.setChecked(ThermalMode.Balanced.value)
         if prevMode != ThermalMode.Balanced.value:
@@ -592,14 +594,12 @@ class TCC_GUI(QtWidgets.QWidget):
     def _startWatchdog(self) -> None:
         cmd = watchdogCommand(HEARTBEAT_FILE)
         if not cmd:
-            print('Watchdog: not available (not bundled), skipping')
             return
         try:
             Path(HEARTBEAT_FILE).write_text('', encoding='utf-8')
         except OSError:
             pass
 
-        # Launch detached through WMI so it survives taskkill /T
         try:
             import wmi
             creation = wmi.WMI().Win32_Process.Create(
@@ -607,16 +607,14 @@ class TCC_GUI(QtWidgets.QWidget):
             pid = int(creation[1])
             if pid:
                 self._watchdogPid = pid
-                print(f'Watchdog: started pid {pid} (detached via WMI)')
                 return
-        except Exception as ex:
-            print(f'Watchdog: WMI launch failed ({type(ex).__name__}), falling back to Popen')
+        except Exception:
+            pass
 
         try:
             self._watchdog = subprocess.Popen(cmd, close_fds=True)
-            print(f'Watchdog: started pid {self._watchdog.pid} (child)')
-        except Exception as ex:
-            print(f'Watchdog: failed to start ({type(ex).__name__}: {ex})')
+        except Exception:
+            pass
 
     def _stopWatchdog(self) -> None:
         if getattr(self, '_watchdogPid', None):
@@ -624,9 +622,8 @@ class TCC_GUI(QtWidgets.QWidget):
                 import wmi
                 for proc in wmi.WMI().Win32_Process(ProcessId=self._watchdogPid):
                     proc.Terminate()
-                print(f'Watchdog: stopped pid {self._watchdogPid}')
-            except Exception as ex:
-                print(f'Watchdog: stop failed ({type(ex).__name__})')
+            except Exception:
+                pass
             self._watchdogPid = None
         if getattr(self, '_watchdog', None) is not None:
             self._watchdog.terminate()
@@ -652,7 +649,6 @@ class TCC_GUI(QtWidgets.QWidget):
         alert("Bug report ready",
               "A redacted diagnostics zip was created and the issue page is open.",
               message2=f"{zipPath}\n\nAttach the zip to the issue.")
-        print('Cleanup: done')
 
     def _onGModeHotKeyPressed(self):
         current = self._modeSwitch.getChecked()
@@ -736,7 +732,7 @@ class TCC_GUI(QtWidgets.QWidget):
         self._loadAppSettings()
 
     def G_Mode_key_Pressed(self, val):
-        print("G_Mode_key " + str(val))
+        pass
 
 def runApp(startMinimized=False) -> int:
     app = QtWidgets.QApplication([])
@@ -744,9 +740,9 @@ def runApp(startMinimized=False) -> int:
     try:
         awcc = AWCCThermal()
     except NoAWCCWMIClass:
-        errorExit("AWCC WMI class not found in the system.", "You don't have some drivers installed or your system is not supported.")
+        errorExit("AWCC WMI class not found in the system.", "Driver missing or system unsupported.")
     except CannotInstAWCCWMI:
-        errorExit("Couldn't instantiate AWCC WMI class.", "Make sure you're running as Admin.")
+        errorExit("Couldn't instantiate AWCC WMI class.", "Ensure running as Administrator.")
 
     try:
         model = DetectHardware().getModelName()
@@ -755,64 +751,120 @@ def runApp(startMinimized=False) -> int:
     if not DetectHardware.isSupportedModel(model) and not DetectHardware.isUnsupportedAllowed():
         errorExit(
             "This laptop model is not verified.",
-            f"Detected: {model}\n\nThis fork was only tested on: {', '.join(SUPPORTED_MODELS)}.\n"
-            f"If you want to try anyway, set the environment variable {ALLOW_UNSUPPORTED_ENV}=1."
+            f"Detected: {model}\n\nSupported: {', '.join(SUPPORTED_MODELS)}.\n"
+            f"To override, set {ALLOW_UNSUPPORTED_ENV}=1."
         )
 
     mainWindow = TCC_GUI(awcc)
+
+    # Apple Liquid Glass stylesheet
     mainWindow.setStyleSheet(f"""
-        QGauge {{
-            border: 1px solid gray;
-            border-radius: 3px;
-            background-color: {Colors.GREY.value};
-        }}
-        QGauge::chunk {{
-            background-color: {Colors.BLUE.value};
-        }}
-        * {{
-            color: {Colors.WHITE.value};
+        QWidget#QMainWindow {{
             background-color: {Colors.DARK_GREY.value};
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
         }}
-        QToolTip {{
-            background-color: black; 
-            color: {Colors.WHITE.value};
-            border: 1px solid {Colors.DARK_GREY.value};
-            border-radius: 3px;
+
+        QWidget#ThermalCard {{
+            background: rgba(255, 255, 255, 0.035);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 12px;
         }}
-        QComboBox {{
-            border: 1px solid gray;
-            border-radius: 3px;
-            padding: 1px 0.6em 1px 3px;
+
+        QFrame#FailSafeCluster {{
+            background: rgba(0, 0, 0, 0.40);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
         }}
-        QComboBox::disabled {{
-            color: {Colors.GREY.value};
-        }}
-        QRadioButton {{
+
+        QCheckBox {{
+            color: #c8cbd2;
+            font-size: 11px;
+            font-weight: 500;
             spacing: 5px;
-            padding: 1px 2px;
         }}
-        QRadioButton::indicator {{
-            width: 12px;
-            height: 12px;
-            border-radius: 6px;
-            border: 1px solid {Colors.GREY.value};
-            background: {Colors.DARK_GREY.value};
+        QCheckBox::indicator {{
+            width: 13px;
+            height: 13px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            background: rgba(255, 255, 255, 0.05);
         }}
-        QRadioButton::indicator:checked {{
-            border: 3px solid {Colors.BLUE.value};
-            background: {Colors.WHITE.value};
+        QCheckBox::indicator:hover {{
+            border-color: rgba(255, 255, 255, 0.40);
+            background: rgba(255, 255, 255, 0.08);
         }}
-        QRadioButton::indicator:disabled {{
-            border-color: {Colors.DARK_GREY.value};
+        QCheckBox::indicator:checked {{
+            background: {Colors.BLUE.value};
+            border-color: {Colors.BLUE.value};
         }}
-        QRadioButton:checked {{
-            font-weight: bold;
+
+        QComboBox {{
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 5px;
+            padding: 2px 4px;
             color: {Colors.WHITE.value};
+            font-size: 11px;
+            font-weight: 500;
         }}
-        QRadioButton:disabled {{
-            color: {Colors.GREY.value};
+        QComboBox:hover {{
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.22);
+        }}
+        QComboBox::drop-down {{
+            border: none;
+            width: 10px;
+        }}
+        QComboBox QAbstractItemView {{
+            background: #14171d;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            color: #f5f5f7;
+            selection-background-color: rgba(10, 132, 255, 0.5);
+        }}
+
+        QSlider::groove:horizontal {{
+            height: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+        }}
+        QSlider::sub-page:horizontal {{
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {Colors.BLUE.value}, stop:1 {Colors.CYAN.value});
+            border-radius: 2px;
+        }}
+        QSlider::sub-page:horizontal:disabled {{
+            background: rgba(255, 255, 255, 0.06);
+        }}
+        QSlider::handle:horizontal {{
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.20);
+            width: 14px;
+            margin-top: -5px;
+            margin-bottom: -5px;
+            border-radius: 7px;
+        }}
+        QSlider::handle:horizontal:hover {{
+            background: #f5f5f7;
+            border-color: {Colors.BLUE.value};
+        }}
+        QSlider::handle:horizontal:disabled {{
+            background: #4a5060;
+            border-color: transparent;
+        }}
+
+        QToolTip {{
+            background: rgba(18, 20, 26, 0.96);
+            color: {Colors.WHITE.value};
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 11px;
         }}
     """)
+
+    # Apply Windows 11 DWM dark titlebar and Acrylic glass
+    applyWindowsGlassAndDarkTheme(int(mainWindow.winId()))
 
     # Compact window fitting
     mainWindow.adjustSize()
