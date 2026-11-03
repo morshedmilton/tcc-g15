@@ -168,7 +168,7 @@ class TCC_GUI(QtWidgets.QWidget):
         # Set main window props
         # Fixed size to hold two thermal panels (380*2 + margins) + 5 mode buttons + failsafe row.
         # adjustSize() fails because the layout's sizeHint is too optimistic (it can squeeze).
-        self.setFixedSize(900, 330)
+        self.setFixedSize(888, 299)
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
             evt.button() == QtCore.Qt.RightButton and
