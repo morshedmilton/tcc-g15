@@ -15,24 +15,24 @@ where each factor is an integer from 1 to 5.
 | `DEF-003` | Safety | Implement automated unit test for INV-1 hard fail-safe trip | 5 | 5 | 5 | 1 | 1 | **125.0** | **P0** | **VERIFIED (Cycle 1)** |
 | `DEF-004` | Repo | Untrack temporary debug artifacts & expand `.gitignore` | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **VERIFIED (Cycle 1)** |
 | `DEF-005` | Supply | Pin production dependencies & separate test/dev dependencies | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **VERIFIED (Cycle 1)** |
-| `OPP-002` | Reliability | Watchdog heartbeat resilience across system sleep/standby + GUI resurrection | 5 | 5 | 5 | 2 | 1 | **62.5** | **P1** | **SCOPED (Cycle 2)** |
-| `OPP-003` | Safety | Thermal mode application retry on transient WMI communication failure | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **SCOPED (Cycle 2)** |
-| `OPP-004` | Supply | Automated machine-readable SBOM (CycloneDX) in build pipeline | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **SCOPED (Cycle 2)** |
-| `OPP-001` | Perf | Background worker thread for telemetry polling (decouple WMI from GUI thread) | 4 | 4 | 4 | 3 | 2 | **10.7** | **P2** | BACKLOG (Cycle 3) |
+| `OPP-002` | Reliability | Watchdog heartbeat resilience across sleep/standby + GUI resurrection | 5 | 5 | 5 | 2 | 1 | **62.5** | **P1** | **VERIFIED (Cycle 2)** |
+| `OPP-003` | Safety | Thermal mode application retry on transient WMI communication failure | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 2)** |
+| `OPP-004` | Supply | Automated machine-readable SBOM (CycloneDX) in build pipeline | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 2)** |
+| `OPP-001` | Perf | Background worker thread for telemetry polling (decouple WMI from GUI thread) | 4 | 5 | 5 | 2 | 1 | **50.0** | **P1** | **SCOPED (Cycle 3)** |
+| `OPP-005` | Arch | Strongly-typed `TelemetrySnapshot` immutable data transfer object | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **SCOPED (Cycle 3)** |
+| `OPP-006` | Obs | Real-time session telemetry export to CSV/JSON for thermal profiling | 3 | 4 | 3 | 2 | 1 | **18.0** | **P2** | BACKLOG (Cycle 4) |
 
 ---
 
-## 2. Cycle 2 Scope (Current)
+## 2. Cycle 3 Scope (Current)
 
 In accordance with Master Directive §5 Phase 3:
-1. **`OPP-002` (P1 - Reliability & Safety):** Watchdog sleep/suspend detection via monotonic loop elapsed delta; GUI auto-resurrection of watchdog if terminated.
-2. **`OPP-003` (P1 - Safety & Robustness):** Thermal mode apply retry mechanism with safe fallback.
-3. **`OPP-004` (P1 - Supply Chain & Security):** Machine-readable CycloneDX SBOM generation in CI pipeline and distribution assets.
+1. **`OPP-001` (P1 - Performance & Responsiveness):** Decouple WMI and NVML synchronous polling from the Qt Main Event Loop using `TelemetryWorker` running in a dedicated `QtCore.QThread`.
+2. **`OPP-005` (P1 - Architecture & Type Safety):** Introduce `TelemetrySnapshot` dataclass ensuring atomic, thread-safe, immutable sensor state transfer.
 
 ---
 
 ## 3. Rejected Register
 
-*(Candidates evaluated and rejected with rationale)*
 - **Rewrite in Rust / C++:** Rejected per Master Directive §2 (Prime Directive 5). Python 3.13 + PySide6 uses ~0.20% CPU and 26 MB RAM. No performance justification for rewrite.
 - **Support for non-Dell hardware:** Rejected. The core purpose of TCC is Dell ACPI WMI control (`AWCCWmiMethodFunction`).

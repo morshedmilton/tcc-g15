@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.3] - 2026-11-04
+
+### Added
+- **Decoupled Background Telemetry Engine (`OPP-001` / ADR-003):** Telemetry queries (Dell ACPI WMI and NVIDIA NVML driver reads) now run in a dedicated `QtCore.QThread` via `TelemetryWorker`, completely decoupling slow COM/driver queries from the Qt GUI Main Thread and eliminating UI micro-stutters during heavy system load.
+- **Strongly-Typed Immutable Telemetry Snapshot (`OPP-005`):** Introduced frozen `TelemetrySnapshot` data transfer object for thread-safe cross-apartment sensor communication.
+- **Comprehensive Telemetry Worker Unit Tests:** Added 6 new automated unit tests in `tests/test_telemetry_worker.py` covering worker polling, signal dispatch, NVML fallback to WMI, and clean QThread lifecycle teardown.
+
+---
+
 ## [1.8.2] - 2026-11-04
 
 ### Added
