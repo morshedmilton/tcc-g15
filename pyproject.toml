@@ -1,0 +1,21 @@
+[tool.ruff]
+line-length = 160
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = [
+    "E501",  # line length (Qt UI layouts & WMI method calls)
+    "E401",  # multiple imports on one line
+    "E402",  # module level import not at top (needed for sys.path tweaks)
+    "E701",  # multiple statements on one line
+    "E702",  # multiple statements on one line (semicolon)
+    "E713",  # test for membership
+    "E722",  # do not use bare 'except'
+    "E741",  # ambiguous variable name
+    "F401",  # unused imports
+    "F841",  # local variable assigned but never used
+    "W291",  # trailing whitespace
+    "W292",  # no newline at end of file
+    "W293",  # blank line contains whitespace
+]

@@ -35,7 +35,8 @@ def main() -> int:
         import pynvml as n
         n.nvmlInit()
         h = n.nvmlDeviceGetHandleByIndex(0)
-        nvml_temp = lambda: n.nvmlDeviceGetTemperature(h, n.NVML_TEMPERATURE_GPU)
+        def nvml_temp():
+            return n.nvmlDeviceGetTemperature(h, n.NVML_TEMPERATURE_GPU)
     except Exception:
         pass
 
