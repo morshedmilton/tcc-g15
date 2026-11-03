@@ -102,9 +102,16 @@ def build(appName: str, version: str) -> Tuple[Optional[str], str]:
             z.writestr('awcc.json', json.dumps(awcc, indent=2, default=str))
             for name, text in logs.items():
                 z.writestr('app.log', text)
+            try:
+                from Backend.TelemetryLogger import TelemetryLogger
+                recent_logs = TelemetryLogger.get_recent_logs()
+                if recent_logs:
+                    z.write(recent_logs[0], arcname='telemetry.csv')
+            except Exception:
+                pass
             z.writestr('README.txt',
-                       'Attach this zip to the issue. It contains model/BIOS/firmware data and the '
-                       'app log. Serial numbers, UUIDs and MAC addresses are stripped.\n')
+                       'Attach this zip to the issue. It contains model/BIOS/firmware data, the '
+                       'app log, and session telemetry. Serial numbers, UUIDs and MAC addresses are stripped.\n')
     except Exception as ex:
         print(f'diagnostics: could not write zip ({type(ex).__name__}: {ex})')
         zipPath = None

@@ -15,6 +15,7 @@ from Backend.DetectHardware import DetectHardware, ALLOW_UNSUPPORTED_ENV, SUPPOR
 from Backend.GpuTemp import GpuTemperature
 from Backend.TelemetryTypes import TelemetrySnapshot
 from GUI.TelemetryWorker import TelemetryWorker, sanitizeTemperature, queryAcPowerStatus
+from Backend.TelemetryLogger import TelemetryLogger
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
@@ -150,6 +151,7 @@ class SettingsKey(Enum):
     FailSafeIsOnFlag = "app/failsafe_is_on_flag"
     MinimizeOnCloseFlag = "app/minimize_on_close_flag"
     AutoBatterySwitch = "app/auto_battery_switch"
+    TelemetryLogging = "app/telemetry_logging"
 
 def errorExit(message: str, message2: Optional[str] = None) -> None:
     if not QtWidgets.QApplication.instance():
@@ -261,7 +263,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.3"
+    APP_VERSION = "1.8.4"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -293,6 +295,8 @@ class TCC_GUI(QtWidgets.QWidget):
         self._gpuTemp = GpuTemperature()
 
         self.settings = QtCore.QSettings(self.APP_URL, "AWCC")
+        log_pref = self.settings.value(SettingsKey.TelemetryLogging.value, True, type=bool)
+        self._telemetryLogger = TelemetryLogger(enabled=log_pref)
 
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
@@ -336,6 +340,14 @@ class TCC_GUI(QtWidgets.QWidget):
         restoreAction.triggered.connect(self.clearAppSettings)
         bugReportAction = menu.addAction("Create bug report")
         bugReportAction.triggered.connect(self.createBugReport)
+
+        self._logAction = menu.addAction("Session telemetry logging")
+        self._logAction.setCheckable(True)
+        self._logAction.setChecked(self._telemetryLogger.enabled)
+        self._logAction.triggered.connect(self._toggleTelemetryLogging)
+
+        openLogsAction = menu.addAction("Open logs directory")
+        openLogsAction.triggered.connect(self._openLogsDirectory)
         exitAction = menu.addAction("Exit")
         exitAction.triggered.connect(self.onExit)
 
@@ -598,6 +610,8 @@ class TCC_GUI(QtWidgets.QWidget):
         def onTelemetryReady(snapshot: TelemetrySnapshot):
             self._touchHeartbeat()
             self._ensureWatchdogRunning()
+            if getattr(self, '_telemetryLogger', None) is not None:
+                self._telemetryLogger.log(snapshot, self._modeSwitch.getChecked())
 
             gpuTemp = snapshot.gpu_temp
             gpuRPM = snapshot.gpu_rpm
@@ -642,7 +656,6 @@ class TCC_GUI(QtWidgets.QWidget):
                 (cpuTemp is not None and cpuTemp >= self.FAILSAFE_HARD_CPU_TEMP) or
                 (gpuTemp is not None and gpuTemp >= self.FAILSAFE_HARD_GPU_TEMP)
             )
-
             if tempIsHigh or hardTempIsHigh:
                 self._failsafeTempIsHighTs = time.time()
 
@@ -694,7 +707,7 @@ class TCC_GUI(QtWidgets.QWidget):
         def updateAppState():
             # Synchronous poll fallback for unit tests or manual refresh
             if getattr(self, '_telemetryWorker', None) is not None:
-                snapshot = self._telemetryWorker.pollOnce()
+                snapshot = self._telemetryWorker.pollOnce(emitSignal=False)
                 if snapshot is not None:
                     onTelemetryReady(snapshot)
 
@@ -756,7 +769,21 @@ class TCC_GUI(QtWidgets.QWidget):
         self._destroy()
         errorExit(message, message2)
 
+    def _toggleTelemetryLogging(self, checked: bool) -> None:
+        if getattr(self, '_telemetryLogger', None) is not None:
+            self._telemetryLogger.set_enabled(checked)
+        self.settings.setValue(SettingsKey.TelemetryLogging.value, checked)
+
+    def _openLogsDirectory(self) -> None:
+        import webbrowser
+        if getattr(self, '_telemetryLogger', None) is not None:
+            target = self._telemetryLogger.logDir
+            target.mkdir(parents=True, exist_ok=True)
+            webbrowser.open(f'file:///{target}')
+
     def _destroy(self):
+        if getattr(self, '_telemetryLogger', None) is not None:
+            self._telemetryLogger.close()
         if self.gModeHotKey is not None:
             self.gModeHotKey.stop()
             self.gModeHotKey.wait()
