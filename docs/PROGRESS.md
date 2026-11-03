@@ -90,12 +90,13 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 |---|---|---|
 | Quiet + Performance profiles | ✅ shipped | `docs/WMI_MAP.md` measured table, commit c918f23 |
 | Mode id resolution per firmware (no more fixed ids) | ✅ | `check_env.py` covers USTT + legacy + unsupported + Custom(0) |
-| Watchdog (restore Balanced on crash/kill/sleep) | ⬜ next | — |
-| SMBIOS whitelist | ⬜ | — |
-| NVML GPU temperature | ⬜ | NVML verified working (61 °C) |
-| Wakeup reduction (21.5 → ≤6 /s) | ⬜ | baseline measured |
-| Honest fan UI (BIOS floor / slider max) | ⬜ | — |
-| Reliable autostart | ⬜ | — |
+| Watchdog (restore Balanced on crash/kill) | ✅ verified | hard-kill test: fired at 13 s, restored Balanced, exited (`docs/baseline/watchdog.result.txt`). Launched via WMI so it survives `taskkill /T` |
+| SMBIOS whitelist | ✅ | refuses unknown models unless `TCC_ALLOW_UNSUPPORTED=1` |
+| NVML GPU temperature | ✅ | primary source, Dell WMI as fallback; prints which one it uses |
+| Wakeup reduction | ✅ 21.5 → **10.5 /s** (2 s poll, 5 s hidden); CPU 0.59 → **0.19 %** | measured `probe3/probe4` |
+| Honest fan UI (BIOS floor) | ✅ tooltip explains the floor, no fake promise | — |
+| Reliable autostart | ✅ verifies the task with `schtasks /query`, writes the XML to temp | — |
+| Diagnostics bundle | ✅ verified: zip (system/wmi/awcc/README) + prefilled issue URL, no serials | `docs/baseline/diag2.log` |
 
 ---
 
@@ -125,7 +126,6 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 
 ## Next Actions (Immediate)
 
-1. Phase 5: watchdog process + SMBIOS whitelist + NVML GPU temp (safety first)
-2. Phase 5: batched polling to cut wakeups from 21.5/s
-3. Phase 4: pytest/CI + issue templates + diagnostics bundle
-4. Then 1.8.0-beta1 build + Gate 2 evidence pack
+1. Package 1.8.0-beta1: PyInstaller exes (app + watchdog) + Inno installer
+2. Soak + sleep/resume checks (Phase 6)
+3. Gate 2 evidence pack for the beta tag

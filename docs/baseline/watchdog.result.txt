@@ -1,0 +1,7 @@
+﻿run at 2026-11-03T11:18:31.7422685+06:00
+gui: pid 16300
+watchdog: running pid 25120
+heartbeat exists: True
+gui killed (force, tree)
+restored: 2026-11-03T11:18:49.385014 ok=True age=13s
+watchdog still running: False

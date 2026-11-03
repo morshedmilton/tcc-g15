@@ -1,0 +1,34 @@
+﻿
+
+ProcessId       : 3160
+ParentProcessId : 12292
+CommandLine     : "C:\Users\morsh\AppData\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae67
+                  03014cbe59f58a71e626853184e80c\projects\Default\tcc-g15\.venv\Scripts\python.exe" C:\Users\morsh\AppD
+                  ata\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae6703014cbe59f58a71e626
+                  853184e80c\projects\Default\tcc-g15\src\tcc-g15.py 
+
+ProcessId       : 23728
+ParentProcessId : 3160
+CommandLine     : "C:\Users\morsh\AppData\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae67
+                  03014cbe59f58a71e626853184e80c\projects\Default\tcc-g15\.venv\Scripts\python.exe" C:\Users\morsh\AppD
+                  ata\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae6703014cbe59f58a71e626
+                  853184e80c\projects\Default\tcc-g15\src\tcc-g15.py 
+
+ProcessId       : 22768
+ParentProcessId : 23728
+CommandLine     : C:\Users\morsh\AppData\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae670
+                  3014cbe59f58a71e626853184e80c\projects\Default\tcc-g15\.venv\Scripts\python.exe C:\Users\morsh\AppDat
+                  a\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae6703014cbe59f58a71e62685
+                  3184e80c\projects\Default\tcc-g15\src\tcc-watchdog.py 
+                  C:\Users\morsh\AppData\Local\Temp\tcc-g15.heartbeat
+
+ProcessId       : 4088
+ParentProcessId : 22768
+CommandLine     : C:\Users\morsh\AppData\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae670
+                  3014cbe59f58a71e626853184e80c\projects\Default\tcc-g15\.venv\Scripts\python.exe C:\Users\morsh\AppDat
+                  a\Roaming\AutoClaw-oversea-official\accounts\98e17ebcdf311a8f97d63ba37e0764ae6703014cbe59f58a71e62685
+                  3184e80c\projects\Default\tcc-g15\src\tcc-watchdog.py 
+                  C:\Users\morsh\AppData\Local\Temp\tcc-g15.heartbeat
+
+
+

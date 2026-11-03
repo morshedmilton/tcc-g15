@@ -1,5 +1,6 @@
-import sys, os, time, datetime
+import sys, os, time, datetime, subprocess, tempfile
 from enum import Enum
+from pathlib import Path
 from typing import Callable, Literal, Optional, Tuple, List
 from PySide6 import QtCore, QtGui, QtWidgets
 from windows_toasts import WindowsToaster, Toast, ToastDuration, ToastDisplayImage
@@ -9,33 +10,52 @@ from GUI.AppColors import Colors
 from GUI.ThermalUnitWidget import ThermalUnitWidget
 from GUI.QGaugeTrayIcon import QGaugeTrayIcon
 from GUI import HotKey
-from Backend.DetectHardware import DetectHardware
+from GUI import Diagnostics
+from Backend.DetectHardware import DetectHardware, ALLOW_UNSUPPORTED_ENV, SUPPORTED_MODELS
+from Backend.GpuTemp import GpuTemperature
 
 GUI_ICON = 'icons/gaugeIcon.png'
+HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
+
+def watchdogCommand(heartbeatPath: str) -> Optional[list]:
+    """The watchdog ships next to the exe when frozen, or as a script when running from source."""
+    if getattr(sys, 'frozen', False):
+        exe = os.path.join(os.path.dirname(sys.executable), 'tcc-watchdog.exe')
+        return [exe, heartbeatPath] if os.path.exists(exe) else None
+    script = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tcc-watchdog.py')
+    return [sys.executable, script, heartbeatPath] if os.path.exists(script) else None
 
 def resourcePath(relativePath: str = '.'):
     return os.path.join(sys._MEIPASS if hasattr(sys, '_MEIPASS') else os.path.abspath('.'), relativePath)
 
 def autorunTask(action: Literal['add', 'remove']) -> int:
-    taskXmlFilePath = resourcePath("tcc_g15_task.xml")
-
-    addCmd = f'schtasks /create /xml "{taskXmlFilePath}" /tn "TCC_G15"'
-    removeCmd = 'schtasks /delete /tn "TCC_G15" /f'
+    taskName = "TCC_G15"
+    removeCmd = f'schtasks /delete /tn "{taskName}" /f'
 
     if action == 'add':
-        # Patch program path in the xml file
         exeFile = os.path.abspath(sys.argv[0])
-        if exeFile.endswith('.exe'):
-            with open(taskXmlFilePath, 'r') as f:
-                xml = f.read()
-            xml = xml.replace('<!--EXE_FILE_PATH-->', exeFile)
-            with open(taskXmlFilePath, 'w') as f:
-                f.write(xml)
-        else:
+        if not exeFile.lower().endswith('.exe'):
             return -100
-        
+        # Patch a copy in temp: the bundled XML can be read-only (and must not be mutated).
+        try:
+            with open(resourcePath("tcc_g15_task.xml"), 'r', encoding='utf-8') as f:
+                xml = f.read()
+        except OSError:
+            return -101
+        xml = xml.replace('<!--EXE_FILE_PATH-->', exeFile)
+        tmpXml = os.path.join(tempfile.gettempdir(), 'tcc_g15_task.xml')
+        try:
+            with open(tmpXml, 'w', encoding='utf-8') as f:
+                f.write(xml)
+        except OSError:
+            return -102
+
         os.system(removeCmd)
-        return os.system(addCmd)
+        rc = os.system(f'schtasks /create /xml "{tmpXml}" /tn "{taskName}" /f')
+        if rc != 0:
+            return rc
+        # Verify instead of trusting the exit code: upstream's task silently didn't exist.
+        return 0 if os.system(f'schtasks /query /tn "{taskName}" >nul 2>&1') == 0 else -103
     else:
         return os.system(removeCmd)
 
@@ -72,6 +92,9 @@ class QPeriodic:
         self._tmr.start()
     def stop(self):
         self._tmr.stop()
+    def setInterval(self, ms: int) -> None:
+        if self._tmr.interval() != ms:
+            self._tmr.setInterval(ms)
 
 class ThermalMode(Enum):
     Balanced = 'Balanced'
@@ -99,7 +122,8 @@ def errorExit(message: str, message2: Optional[str] = None) -> None:
     sys.exit(1)
 
 class TCC_GUI(QtWidgets.QWidget):
-    TEMP_UPD_PERIOD_MS = 1000
+    TEMP_UPD_PERIOD_MS = 2000
+    TEMP_UPD_PERIOD_MS_HIDDEN = 5000
     FAILSAFE_CPU_TEMP = 95
     FAILSAFE_GPU_TEMP = 85
     FAILSAFE_TRIGGER_DELAY_SEC = 8
@@ -134,6 +158,8 @@ class TCC_GUI(QtWidgets.QWidget):
     def __init__(self, awcc: AWCCThermal):
         super().__init__()
         self._awcc = awcc
+        self._gpuTemp = GpuTemperature()   # before the first updateAppState() call
+        print(f'GPU temperature source: {"NVML" if self._gpuTemp.available else "Dell WMI sensor"}')
 
         self.settings = QtCore.QSettings(self.APP_URL, "AWCC")
         print(f'Settings location: {self.settings.fileName()}')
@@ -177,6 +203,8 @@ class TCC_GUI(QtWidgets.QWidget):
         removeFromAutorunAction.triggered.connect(lambda: autorunTaskRun('remove'))
         restoreAction = menu.addAction("Restore Default")
         restoreAction.triggered.connect(self.clearAppSettings)
+        bugReportAction = menu.addAction("Create bug report")
+        bugReportAction.triggered.connect(self.createBugReport)
         exitAction = menu.addAction("Exit")
         exitAction.triggered.connect(self.onExit)
         # Setup tray widget
@@ -337,7 +365,12 @@ class TCC_GUI(QtWidgets.QWidget):
 
         def updateAppState():
             # Get temps and RPMs
-            gpuTemp = self._saneTemp(self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx))
+            self._touchHeartbeat()
+            # NVML reads the driver directly and is not affected by the bogus WMI GPU
+            # readings (#9). Fall back to the Dell sensor when there is no NVIDIA driver.
+            nvmlGpu = self._gpuTemp.read()
+            gpuTemp = self._saneTemp(nvmlGpu if nvmlGpu is not None
+                                    else self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx))
             gpuRPM = self._awcc.getFanRPM(self._awcc.GPUFanIdx)
             cpuTemp = self._saneTemp(self._awcc.getFanRelatedTemp(self._awcc.CPUFanIdx))
             cpuRPM = self._awcc.getFanRPM(self._awcc.CPUFanIdx)
@@ -393,6 +426,10 @@ class TCC_GUI(QtWidgets.QWidget):
             tray.setIcon(self.trayIcon)
             tray.setToolTip(f"GPU:    {gpuTemp} °C    {gpuRPM} RPM\nCPU:    {cpuTemp} °C    {cpuRPM} RPM\nMode:    {self._modeSwitch.getChecked().replace('_', ' ')}")
             
+            # Poll slower while the window is hidden: 21 wakeups/s was the baseline debt
+            self._updateGaugesTask.setInterval(
+                self.TEMP_UPD_PERIOD_MS if self.isVisible() else self.TEMP_UPD_PERIOD_MS_HIDDEN)
+
             # Periodically save app settings
             self._saveAppSettings()
 
@@ -401,6 +438,10 @@ class TCC_GUI(QtWidgets.QWidget):
         self._updateGaugesTask = QPeriodic(self, self.TEMP_UPD_PERIOD_MS, updateAppState)
         updateAppState()
         self._updateGaugesTask.start()
+
+        self._watchdog = None
+        self._watchdogPid = None
+        self._startWatchdog()
 
         self.gModeHotKey = HotKey.HotKey(HotKey.G_MODE_KEY, self._gModeKeySignal)
         self._gModeKeySignal.connect(self._onGModeHotKeyPressed)
@@ -450,6 +491,74 @@ class TCC_GUI(QtWidgets.QWidget):
             self.gModeHotKey.wait()
         if self._updateGaugesTask is not None:
             self._updateGaugesTask.stop()
+        # Stop the watchdog only after the mode was restored, so it cannot race us.
+        self._stopWatchdog()
+        if getattr(self, '_gpuTemp', None) is not None:
+            self._gpuTemp.shutdown()
+
+    def _startWatchdog(self) -> None:
+        cmd = watchdogCommand(HEARTBEAT_FILE)
+        if not cmd:
+            print('Watchdog: not available (not bundled), skipping')
+            return
+        try:
+            Path(HEARTBEAT_FILE).write_text('', encoding='utf-8')
+        except OSError:
+            pass
+
+        # Launch through WMI so the watchdog is not a child of this process: a force-kill
+        # with /T (Task Manager, taskkill /T) would otherwise take the watchdog down with us.
+        try:
+            import wmi
+            creation = wmi.WMI().Win32_Process.Create(
+                CommandLine=' '.join(f'"{part}"' for part in cmd))
+            pid = int(creation[1])
+            if pid:
+                self._watchdogPid = pid
+                print(f'Watchdog: started pid {pid} (detached via WMI)')
+                return
+        except Exception as ex:
+            print(f'Watchdog: WMI launch failed ({type(ex).__name__}), falling back to Popen')
+
+        try:
+            self._watchdog = subprocess.Popen(cmd, close_fds=True)
+            print(f'Watchdog: started pid {self._watchdog.pid} (child)')
+        except Exception as ex:
+            print(f'Watchdog: failed to start ({type(ex).__name__}: {ex})')
+
+    def _stopWatchdog(self) -> None:
+        if getattr(self, '_watchdogPid', None):
+            try:
+                import wmi
+                for proc in wmi.WMI().Win32_Process(ProcessId=self._watchdogPid):
+                    proc.Terminate()
+                print(f'Watchdog: stopped pid {self._watchdogPid}')
+            except Exception as ex:
+                print(f'Watchdog: stop failed ({type(ex).__name__})')
+            self._watchdogPid = None
+        if getattr(self, '_watchdog', None) is not None:
+            self._watchdog.terminate()
+            self._watchdog = None
+
+    def _touchHeartbeat(self) -> None:
+        try:
+            Path(HEARTBEAT_FILE).touch()
+        except OSError:
+            pass
+
+    def createBugReport(self) -> None:
+        try:
+            zipPath, url = Diagnostics.build(self.APP_NAME, self.APP_VERSION)
+        except Exception as ex:
+            alert("Diagnostics failed", f"{type(ex).__name__}: {ex}", QtWidgets.QMessageBox.Icon.Critical)
+            return
+        import webbrowser
+        if zipPath:
+            webbrowser.open(f'file:///{zipPath}')
+        webbrowser.open(url)
+        alert("Bug report ready",
+              "A redacted diagnostics zip was created and the issue page is open.",
+              message2=f"{zipPath}\n\nAttach the zip to the issue.")
         print('Cleanup: done')
 
     def _onGModeHotKeyPressed(self):
@@ -544,6 +653,20 @@ def runApp(startMinimized = False) -> int:
         errorExit("AWCC WMI class not found in the system.", "You don't have some drivers installed or your system is not supported.")
     except CannotInstAWCCWMI:
         errorExit("Couldn't instantiate AWCC WMI class.", "Make sure you're running as Admin.")
+
+    # Refuse models we never tested: an unknown board may answer different mode ids, and a
+    # wrong mode id here means a fan curve we cannot reason about.
+    try:
+        model = DetectHardware().getModelName()
+    except Exception:
+        model = None
+    if not DetectHardware.isSupportedModel(model) and not DetectHardware.isUnsupportedAllowed():
+        errorExit(
+            "This laptop model is not verified.",
+            f"Detected: {model}\n\nThis fork was only tested on: {', '.join(SUPPORTED_MODELS)}.\n"
+            f"If you want to try anyway, set the environment variable {ALLOW_UNSUPPORTED_ENV}=1."
+            f"Wrong thermal settings can overheat a machine that uses a different firmware interface."
+        )
 
     mainWindow = TCC_GUI(awcc)
     mainWindow.setStyleSheet(f"""

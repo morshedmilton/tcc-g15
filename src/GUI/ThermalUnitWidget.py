@@ -23,6 +23,10 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         self._speedSlider.setMaximum(sliderMaxAndTick[0])
         self._speedSlider.setTickInterval(sliderMaxAndTick[1])
         self._speedSlider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self._speedSlider.setToolTip(
+            "Fan speed offset over the BIOS curve.\n"
+            "The BIOS keeps a floor (about 70 % / 3000 rpm on a G15 5530), so values below it "
+            "change nothing - the firmware still decides the real minimum.")
         _speedSliderLabel = QtWidgets.QLabel("Fan Speed")
         self._speedSliderDebounce = QtCore.QTimer()
         self._speedSliderDebounce.setInterval(500)
