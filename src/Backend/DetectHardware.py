@@ -7,7 +7,7 @@ from wmi import WMI # type: ignore
 # in with TCC_ALLOW_UNSUPPORTED=1 - an unverified board can answer different mode ids.
 SUPPORTED_MODELS = (
     'G15 5511', 'G15 5515', 'G15 5520', 'G15 5525', 'G15 5530', 'G15 5535', 'G15 5590',
-    'G3 3590', 'G3 3500', 'm16 R1', '16X Aurora', 'AA18250',
+    'G16 7630', 'G3 3590', 'G3 3500', 'm16 R1', 'm15 R7', '16X Aurora', 'AA18250',
 )
 ALLOW_UNSUPPORTED_ENV = 'TCC_ALLOW_UNSUPPORTED'
 

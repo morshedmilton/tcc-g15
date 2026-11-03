@@ -84,7 +84,7 @@ WORKLOADS = [
 
 # ---- Main -------------------------------------------------------------------
 def main():
-    print(f"=== tcc-g15 Baseline Measurement ===")
+    print("=== tcc-g15 Baseline Measurement ===")
     print(f"Output dir: {OUT_DIR}")
     print(f"CSV: {CSV_FILE}")
     print(f"JSON: {JSON_FILE}")

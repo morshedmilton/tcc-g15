@@ -2,9 +2,9 @@ name: CI - Build & Test
 
 on:
   push:
-    branches: [ "master", "g15-5530" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master", "g15-5530" ]
+    branches: [ "main" ]
 
 jobs:
   test:
@@ -21,8 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller pytest ruff
+        pip install -r requirements-dev.txt ruff
 
     - name: Lint with ruff
       run: |

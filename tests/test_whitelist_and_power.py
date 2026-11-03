@@ -6,6 +6,9 @@ from GUI.AppGUI import getAcPowerStatus, watchdogCommand, HEARTBEAT_FILE
 def test_hardware_whitelist():
     assert DetectHardware.isSupportedModel("Dell Inc. Dell G15 5530")
     assert DetectHardware.isSupportedModel("Dell Inc. Dell G15 5520")
+    assert DetectHardware.isSupportedModel("Dell Inc. Dell G16 7630")
+    assert DetectHardware.isSupportedModel("Alienware m15 R7")
+    assert DetectHardware.isSupportedModel("Alienware m16 R1")
     assert not DetectHardware.isSupportedModel("Dell Inc. XPS 13 9310")
     assert not DetectHardware.isSupportedModel("Alienware m16")
     assert not DetectHardware.isSupportedModel(None)

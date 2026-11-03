@@ -53,15 +53,17 @@ This software interacts directly with Dell's thermal and fan firmware tables via
 
 | Tier | Category | Model / Chassis | Architecture & Hardware Specs | Compatibility Level & Details |
 |---|---|---|---|---|
-| **Tier 1** | **Officially Verified** | **Dell G15 5530** | Intel 13th Gen Core (i5-13450HX, i7-13650HX, i9-13900HX) + RTX 4050/4060/4070 | **100% Hardware Verified** (BIOS 1.36.0+, full USTT 5-mode control) |
-| **Tier 2** | **Compatible Models** | **Dell G15 5520** | Intel Core 12th Gen (Alder Lake) | Full Profile & Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G15 5525** | AMD Ryzen 6000 Series (Rembrandt) | Full Profile & Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G15 5515** | AMD Ryzen 5000 Series (Cezanne) | Full Profile & Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G15 5511** | Intel Core 11th Gen (Tiger Lake) | Full Profile & Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G15 5535** | AMD Ryzen 7000 Series (Phoenix/Dragon Range) | Full Profile & Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G15 5590** | Intel Core 9th Gen (Coffee Lake) | Legacy WMI Fan Control |
-| **Tier 2** | **Compatible Models** | **Dell G16 7630** | Intel Core 13th Gen (Raptor Lake) | Full Profile & Fan Control (Shares G15 5530 thermal table) |
-| **Tier 2** | **Compatible Models** | **Alienware m16 / m15** | Alienware m16 R1, Alienware m15 R7 | Full Profile & Fan Control (Compatible AWCC ACPI methods) |
+| **Tier 1** | **Hardware Verified** | **Dell G15 5530** | Intel 13th Gen Core (i7-13650HX) + RTX 4060 Laptop (other 5530 variants share board ACPI) | **100% Hardware Verified** (BIOS 1.36.0+, full USTT 5-mode control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G16 7630** | Intel Core 13th Gen (Raptor Lake) | Whitelisted in code (Shares G15 5530 USTT thermal table) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5520** | Intel Core 12th Gen (Alder Lake) | Whitelisted in code (Full Profile & Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5525** | AMD Ryzen 6000 Series (Rembrandt) | Whitelisted in code (Full Profile & Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5515** | AMD Ryzen 5000 Series (Cezanne) | Whitelisted in code (Full Profile & Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5511** | Intel Core 11th Gen (Tiger Lake) | Whitelisted in code (Full Profile & Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5535** | AMD Ryzen 7000 Series (Phoenix/Dragon Range) | Whitelisted in code (Full Profile & Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G15 5590** | Intel Core 9th Gen (Coffee Lake) | Whitelisted in code (Legacy WMI Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Dell G3 3590 / 3500** | Intel Core 9th/10th Gen | Whitelisted in code (Legacy Dell ACPI Fan Control) |
+| **Tier 2** | **Code Whitelisted** | **Alienware m16 R1 / m15 R7** | Intel / AMD + RTX 30/40 Series | Whitelisted in code (Compatible AWCC ACPI methods) |
+| **Tier 2** | **Code Whitelisted** | **Alienware Aurora (16X / AA18250)** | Alienware Desktop / Chassis | Whitelisted in code (Legacy AWCC WMI methods) |
 | **Tier 3** | **Universal Override** | **Other Dell G / Alienware** | Any other Dell G-series, Inspiron Gaming, or Alienware model | Universal Fallback — Launch with `$env:TCC_ALLOW_UNSUPPORTED="1"` |
 
 ### ⚪ Tier 3 Universal Fallback Override Instructions
