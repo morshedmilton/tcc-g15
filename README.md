@@ -4,9 +4,9 @@
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
 [![Python: 3.13 | PySide6](https://img.shields.io/badge/Python-3.13%20%7C%20PySide6-3776AB.svg?logo=python)](https://pyside.org)
 [![Windows 11: DWM Acrylic](https://img.shields.io/badge/Windows%2011-DWM%20Acrylic-00F0FF.svg?logo=windows)](https://microsoft.com/windows)
-[![Hardware: Dell G15 5530 Verified](https://img.shields.io/badge/Hardware-Dell%20G15%205530%20Verified-00FF66.svg)]()
-[![Release: v1.8.0](https://img.shields.io/badge/Release-v1.8.0-yellow.svg)](https://github.com/morshedmilton/tcc-g15/releases)
-[![CI: Passing](https://img.shields.io/badge/CI-Passing-brightgreen.svg)]()
+[![Hardware: Dell G15 5530 Verified](https://img.shields.io/badge/Hardware-Dell%20G15%205530%20Verified-00FF66.svg)](#supported-laptop-models)
+[![Release: v1.8.0](https://img.shields.io/badge/Release-v1.8.0-yellow.svg)](https://github.com/morshedmilton/tcc-g15/releases/tag/v1.8.0)
+[![CI: Passing](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](https://github.com/morshedmilton/tcc-g15/actions)
 
 A high-performance, liquid-efficient, open-source replacement for Alienware Command Center (AWCC). Engineered specifically for Dell G-series and Alienware gaming laptops with **true Windows 11 DWM Acrylic frosted glass**, a **futuristic Cyberpunk telemetry HUD**, and direct hardware-level thermal management.
 
@@ -46,30 +46,26 @@ A high-performance, liquid-efficient, open-source replacement for Alienware Comm
 
 ---
 
+<a id="supported-laptop-models"></a>
 ## 💻 Supported Laptop Models
 
-This software interacts directly with Dell's thermal and fan firmware tables via the `AWCCWmiMethodFunction` ACPI interface.
+This software interacts directly with Dell's thermal and fan firmware tables via the `AWCCWmiMethodFunction` ACPI interface. Compatible laptops are categorized across three hardware support tiers:
 
-### 🟢 Tier 1: Officially Verified & Tested
-| Model | CPU Architecture | Dedicated GPU | BIOS Tested | Status |
+| Tier | Category | Model / Chassis | Architecture & Hardware Specs | Compatibility Level & Details |
 |---|---|---|---|---|
-| **Dell G15 5530** | Intel 13th Gen Core (i5-13450HX, i7-13650HX, i9-13900HX) | RTX 4050 / RTX 4060 / RTX 4070 Laptop | 1.36.0+ | **100% Hardware Verified** |
+| **Tier 1** | **Officially Verified** | **Dell G15 5530** | Intel 13th Gen Core (i5-13450HX, i7-13650HX, i9-13900HX) + RTX 4050/4060/4070 | **100% Hardware Verified** (BIOS 1.36.0+, full USTT 5-mode control) |
+| **Tier 2** | **Compatible Models** | **Dell G15 5520** | Intel Core 12th Gen (Alder Lake) | Full Profile & Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G15 5525** | AMD Ryzen 6000 Series (Rembrandt) | Full Profile & Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G15 5515** | AMD Ryzen 5000 Series (Cezanne) | Full Profile & Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G15 5511** | Intel Core 11th Gen (Tiger Lake) | Full Profile & Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G15 5535** | AMD Ryzen 7000 Series (Phoenix/Dragon Range) | Full Profile & Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G15 5590** | Intel Core 9th Gen (Coffee Lake) | Legacy WMI Fan Control |
+| **Tier 2** | **Compatible Models** | **Dell G16 7630** | Intel Core 13th Gen (Raptor Lake) | Full Profile & Fan Control (Shares G15 5530 thermal table) |
+| **Tier 2** | **Compatible Models** | **Alienware m16 / m15** | Alienware m16 R1, Alienware m15 R7 | Full Profile & Fan Control (Compatible AWCC ACPI methods) |
+| **Tier 3** | **Universal Override** | **Other Dell G / Alienware** | Any other Dell G-series, Inspiron Gaming, or Alienware model | Universal Fallback — Launch with `$env:TCC_ALLOW_UNSUPPORTED="1"` |
 
-### 🟡 Tier 2: Compatible Models (Community Verified)
-These models share Dell's USTT / Legacy thermal interfaces and fan sensor maps:
-| Model Line | Chassis / Architecture | Compatibility Level |
-|---|---|---|
-| **Dell G15 5520** | Intel Core 12th Gen (Alder Lake) | Full Profile & Fan Control |
-| **Dell G15 5525** | AMD Ryzen 6000 Series (Rembrandt) | Full Profile & Fan Control |
-| **Dell G15 5515** | AMD Ryzen 5000 Series (Cezanne) | Full Profile & Fan Control |
-| **Dell G15 5511** | Intel Core 11th Gen (Tiger Lake) | Full Profile & Fan Control |
-| **Dell G15 5535** | AMD Ryzen 7000 Series (Phoenix/Dragon Range) | Full Profile & Fan Control |
-| **Dell G15 5590** | Intel Core 9th Gen (Coffee Lake) | Legacy WMI Fan Control |
-| **Dell G16 7630** | Intel Core 13th Gen (Raptor Lake) | Full Profile & Fan Control |
-| **Alienware m16 / m15** | Alienware m16 R1, Alienware m15 R7 | Full Profile & Fan Control |
-
-### ⚪ Tier 3: Universal Fallback Override
-For any other Dell G-series, Inspiron Gaming, or Alienware laptop, launch with:
+### ⚪ Tier 3 Universal Fallback Override Instructions
+For any other unverified Dell G-series, Inspiron Gaming, or Alienware laptop, launch via PowerShell:
 ```powershell
 $env:TCC_ALLOW_UNSUPPORTED="1"
 .\tcc-g15.exe
@@ -119,12 +115,12 @@ Hardware safety is non-negotiable when controlling thermal firmware:
 Grab the latest release from the **[Releases Page](https://github.com/morshedmilton/tcc-g15/releases)**:
 
 ### Option A: Windows Setup Installer (Recommended)
-1. Download **`tcc-g15-installer-1.8.0.exe`**.
+1. Download **[`tcc-g15-installer-1.8.0.exe`](https://github.com/morshedmilton/tcc-g15/releases/download/v1.8.0/tcc-g15-installer-1.8.0.exe)**.
 2. Run the installer. It configures the application files, desktop & Start Menu shortcuts, elevation settings, and optional autostart task.
 3. Launch **Thermal Control Center** from the Start Menu or Desktop shortcut.
 
 ### Option B: Standalone Portable Distribution
-1. Download **`tcc-g15-portable-1.8.0.zip`**.
+1. Download **[`tcc-g15-portable-1.8.0.zip`](https://github.com/morshedmilton/tcc-g15/releases/download/v1.8.0/tcc-g15-portable-1.8.0.zip)**.
 2. Extract the archive to any directory (e.g. `C:\Tools\tcc-g15\`).
 3. Right-click `tcc-g15.exe` and select **Run as Administrator** (required for Dell ACPI/WMI access).
 
@@ -132,8 +128,8 @@ Grab the latest release from the **[Releases Page](https://github.com/morshedmil
 
 | Distribution | File Name | Size | SHA-256 Checksum |
 |---|---|---|---|
-| **Windows Installer** | `tcc-g15-installer-1.8.0.exe` | ~43.0 MB | `d53a1875a8a9dacba7114d20ce075ead14d29d51d81d9cc1a9fe9ad092c650c7` |
-| **Portable Zip** | `tcc-g15-portable-1.8.0.zip` | ~56.7 MB | `68a1e9d626b289b8ae77be994831fb83ab232e02d67cab22d48c713c9ced4cb6` |
+| **Windows Installer** | [`tcc-g15-installer-1.8.0.exe`](https://github.com/morshedmilton/tcc-g15/releases/download/v1.8.0/tcc-g15-installer-1.8.0.exe) | ~43.0 MB | `d53a1875a8a9dacba7114d20ce075ead14d29d51d81d9cc1a9fe9ad092c650c7` |
+| **Portable Zip** | [`tcc-g15-portable-1.8.0.zip`](https://github.com/morshedmilton/tcc-g15/releases/download/v1.8.0/tcc-g15-portable-1.8.0.zip) | ~56.7 MB | `68a1e9d626b289b8ae77be994831fb83ab232e02d67cab22d48c713c9ced4cb6` |
 
 #### Checksum Verification (PowerShell)
 ```powershell
@@ -148,7 +144,7 @@ Grab the latest release from the **[Releases Page](https://github.com/morshedmil
 
 ## 📜 Changelog & Version History
 
-### [1.8.0] - 2026-11-03 — First Independent Major Release
+### [[1.8.0]](https://github.com/morshedmilton/tcc-g15/releases/tag/v1.8.0) - 2026-11-03 — First Independent Major Release
 - **Full 5 Thermal Profiles on Dell G15 5530:** Added hardware-verified `Quiet` (`0xA3`) and `Performance` (`0xA1`) profiles alongside `Balanced` (`0xA0`), `G-Mode` (`0xAB`), and `Custom` (`0x0`).
 - **Cyberpunk HUD & DWM Acrylic Glass:** Complete visual transformation into a futuristic gaming thermal HUD with custom `CyberGauge` widgets (25° skewed bar geometry, technical hatch dividers, neon green/yellow/crimson thresholds) and true Windows 11 DWM Acrylic desktop blur (`DWMWA_SYSTEMBACKDROP_TYPE = 3`).
 - **Compact Geometry & Vector Icons:** Clamped window width to ~362 px, normalized OFFS slider range strictly to 0–100%, and introduced vector microchip/GPU board hardware icons without label clipping.
@@ -159,14 +155,14 @@ Grab the latest release from the **[Releases Page](https://github.com/morshedmil
 - **One-Click Bug Report Diagnostics:** Bundles system specs, WMI survey, and application logs into a privacy-redacted zip for fast GitHub issue reporting.
 - **Pytest Unit Test Suite:** 21 automated tests covering WMI bit packing, UI limits, safety thresholds, and whitelist logic.
 
-### [1.7.0] - 2026-11-02 — Firmware Stability & Correctness Fixes
+### [[1.7.0]](CHANGELOG.md#170---2026-11-02) - 2026-11-02 — Firmware Stability & Correctness Fixes
 - Fixed Balanced mode silently falling back to Custom mode (bool-as-int bug).
 - Fixed G-mode persisting across reboots when saved in settings.
 - Added `_saneTemp()` guard to filter out implausible readings (< 5°C or > 120°C).
 - Added automatic clearing of stale win32com COM cache (`%TEMP%/gen_py`) and WMI handshake retry.
 - Filtered unsupported `-2` return codes from Dell WMI for fan RPM percent.
 
-### [1.6.4] - 2025-01-18 — Upstream Baseline by AlexIII
+### [[1.6.4]](https://github.com/AlexIII/tcc-g15/releases/tag/1.6.4) - 2025-01-18 — Upstream Baseline by AlexIII
 - Original research, reverse engineering of Dell's `AWCCWmiMethodFunction` ACPI thermal interface, and initial dual-fan tray utility.
 
 > 📖 See the full [CHANGELOG.md](CHANGELOG.md) and [Release Notes](https://github.com/morshedmilton/tcc-g15/releases) for detailed history.
