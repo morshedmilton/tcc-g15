@@ -2,8 +2,8 @@
 
 [![Platform: Windows 10 / 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
-[![Python: 3.13 | PySide6](https://img.shields.io/badge/Python-3.13%20%7C%20PySide6-3776AB.svg?logo=python)](https://pyside.org)
-[![Windows 11: DWM Acrylic](https://img.shields.io/badge/Windows%2011-DWM%20Acrylic-00F0FF.svg?logo=windows)](https://microsoft.com/windows)
+[![Python: 3.13 | PySide6](https://img.shields.io/badge/Python-3.13%20%7C%20PySide6-3776AB.svg?logo=python)](https://doc.qt.io/qtforpython-6/)
+[![Windows 11: DWM Acrylic](https://img.shields.io/badge/Windows%2011-DWM%20Acrylic-00F0FF.svg?logo=windows)](https://learn.microsoft.com/windows/apps/design/style/acrylic)
 [![Hardware: Dell G15 5530 Verified](https://img.shields.io/badge/Hardware-Dell%20G15%205530%20Verified-00FF66.svg)](#supported-laptop-models)
 [![Release: v1.8.0](https://img.shields.io/badge/Release-v1.8.0-yellow.svg)](https://github.com/morshedmilton/tcc-g15/releases/tag/v1.8.0)
 [![CI: Passing](https://img.shields.io/badge/CI-Passing-brightgreen.svg)](https://github.com/morshedmilton/tcc-g15/actions)
