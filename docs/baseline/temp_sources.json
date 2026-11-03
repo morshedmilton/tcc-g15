@@ -1,0 +1,102 @@
+{
+  "idle": [
+    {
+      "t": 1793685411.7,
+      "acpi_zones": {
+        "error": "x_wmi"
+      },
+      "perf_zones": {},
+      "awcc": {
+        "sensor_temps": [
+          63,
+          50
+        ],
+        "fan_rpm": [
+          4573,
+          3414
+        ]
+      },
+      "nvml_gpu": 49
+    }
+  ],
+  "load_0": [
+    {
+      "t": 1793685422.3,
+      "acpi_zones": {
+        "error": "x_wmi"
+      },
+      "perf_zones": {},
+      "awcc": {
+        "sensor_temps": [
+          84,
+          53
+        ],
+        "fan_rpm": [
+          4542,
+          3444
+        ]
+      },
+      "nvml_gpu": 51
+    }
+  ],
+  "load_1": [
+    {
+      "t": 1793685432.6,
+      "acpi_zones": {
+        "error": "x_wmi"
+      },
+      "perf_zones": {},
+      "awcc": {
+        "sensor_temps": [
+          84,
+          54
+        ],
+        "fan_rpm": [
+          4562,
+          3456
+        ]
+      },
+      "nvml_gpu": 52
+    }
+  ],
+  "load_2": [
+    {
+      "t": 1793685443.0,
+      "acpi_zones": {
+        "error": "x_wmi"
+      },
+      "perf_zones": {},
+      "awcc": {
+        "sensor_temps": [
+          85,
+          55
+        ],
+        "fan_rpm": [
+          4562,
+          3480
+        ]
+      },
+      "nvml_gpu": 53
+    }
+  ],
+  "after": [
+    {
+      "t": 1793685448.5,
+      "acpi_zones": {
+        "error": "x_wmi"
+      },
+      "perf_zones": {},
+      "awcc": {
+        "sensor_temps": [
+          62,
+          54
+        ],
+        "fan_rpm": [
+          4583,
+          3420
+        ]
+      },
+      "nvml_gpu": 52
+    }
+  ]
+}

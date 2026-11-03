@@ -98,14 +98,13 @@ class QPeriodic:
             self._tmr.setInterval(ms)
 
 class ThermalMode(Enum):
+    Auto = 'Auto'
     Balanced = 'Balanced'
     G_Mode = 'G_Mode'
     Custom = 'Custom'
-    Performance = 'Performance'
-    Quiet = 'Quiet'
 
-# display order in the mode switch; G mode last because it is the loudest
-MODE_ORDER = [ThermalMode.Custom, ThermalMode.Balanced, ThermalMode.Performance, ThermalMode.Quiet, ThermalMode.G_Mode]
+# display order: Auto first, then the explicit modes
+MODE_ORDER = [ThermalMode.Auto, ThermalMode.Balanced, ThermalMode.G_Mode, ThermalMode.Custom]
     
 class SettingsKey(Enum):
     Mode = "app/mode"
@@ -166,8 +165,10 @@ class TCC_GUI(QtWidgets.QWidget):
         print(f'Settings location: {self.settings.fileName()}')
 
         # Set main window props
-        self.setFixedSize(600, 0)
-        self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint)
+        # Set main window props
+        # Fixed size to hold two thermal panels (380*2 + margins) + 5 mode buttons + failsafe row.
+        # adjustSize() fails because the layout's sizeHint is too optimistic (it can squeeze).
+        self.setFixedSize(900, 330)
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
             evt.button() == QtCore.Qt.RightButton and
@@ -228,6 +229,23 @@ class TCC_GUI(QtWidgets.QWidget):
         self._thermalGPU.setTitle('GPU')
         self._thermalCPU = ThermalUnitWidget(self, tempMinMax= (0, 110), tempColorLimits= self.CPU_COLOR_LIMITS, fanMinMax= (0, 5500), sliderMaxAndTick= (120, 20))
         self._thermalCPU.setTitle('CPU')
+
+        # Say where the numbers come from: the Dell sensor is a firmware/board sensor, not
+        # an Intel package reading, and the GPU number comes from the NVIDIA driver.
+        self._thermalGPU.setSourceNote(
+            'GPU temperature: NVIDIA NVML (driver)' if self._gpuTemp.available
+            else 'GPU temperature: Dell firmware sensor (WMI)')
+        self._thermalCPU.setSourceNote(
+            'CPU temperature: Dell firmware sensor 1. Verified on this board: 63 °C idle → 85 °C '
+            'under a 10-process load. This is a board sensor, not an Intel package reading.')
+
+        # Auto mode fan curve: CPU temp -> fan speed %
+        # 50 °C  -> 3500 RPM (~64 % of ~5500 max)
+        # 80 °C+ -> 100 % (max RPM)
+        # Linear interpolation between, clamped.        self._autoCurveMinTemp = 50
+        self._autoCurveMaxTemp = 80
+        self._autoCurveMinRpm = 3500
+        self._autoCurveMaxRpm = 5500
 
         # Detecting GPU/CPU model is a slow operation, run asynchronously
         class DetectCpuGpuModelsWorker(QtCore.QObject):
@@ -310,14 +328,17 @@ class TCC_GUI(QtWidgets.QWidget):
 
         modeBox = QtWidgets.QHBoxLayout()
         modeBox.addWidget(self._modeSwitch, alignment= QtCore.Qt.AlignLeft)
-        modeBox.addWidget(QtWidgets.QWidget(), alignment= QtCore.Qt.AlignRight) # Insert dummy Widget in order to move the following 'failsafeBox' to the right side
-        modeBox.addLayout(failsafeBox)
+        modeBox.addStretch(1)
 
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.addLayout(lTherm)
+        # One row per control group: the mode switch used to share a row with the fail-safe
+        # widgets, which pushed the last mode off the window edge.
         mainLayout.addLayout(modeBox)
+        mainLayout.addLayout(failsafeBox)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainLayout.setContentsMargins(10, 0, 10, 0)
+        self.adjustSize()
 
         # Glue GUI to backend
         self.gModeHotKey = None
@@ -328,7 +349,7 @@ class TCC_GUI(QtWidgets.QWidget):
             print(f'Set {fan} fan speed to {speed}: ' + ('ok' if res else 'fail'))
 
         def updateFanSpeed():
-            if self._modeSwitch.getChecked() != ThermalMode.Custom.value:
+            if self._modeSwitch.getChecked() not in (ThermalMode.Custom.value, ThermalMode.Auto.value):
                 return
             setFanSpeed('GPU', self._thermalGPU.getSpeedSlider())
             setFanSpeed('CPU', self._thermalCPU.getSpeedSlider())
@@ -338,7 +359,7 @@ class TCC_GUI(QtWidgets.QWidget):
         self._lastGoodMode = ThermalMode.Balanced.value
 
         def onModeChange(val: str):
-            self._thermalGPU.setSpeedDisabled(val != ThermalMode.Custom.value)
+            self._thermalGPU.setSpeedDisabled(val != (ThermalMode.Custom.value, ThermalMode.Auto.value))
             self._thermalCPU.setSpeedDisabled(val != ThermalMode.Custom.value)
             res = self._awcc.setMode(self._awcc.Mode[val])
             print(f'Set mode {val}: ' + ('ok' if res else 'fail'))
@@ -420,6 +441,24 @@ class TCC_GUI(QtWidgets.QWidget):
                 self._toasterMessageCurrentMode(source='failsafe')
                 self._failsafeTrippedPrevModeStr = None
                 print('Fail-safe reset')
+
+            # Auto mode: fan speed follows CPU temperature curve
+            # 50 °C -> 3500 RPM, 80 °C+ -> max RPM (5500), linear between
+            if self._modeSwitch.getChecked() == ThermalMode.Auto.value and cpuTemp is not None:
+                if cpuTemp <= self._autoCurveMinTemp:
+                    targetRpm = self._autoCurveMinRpm
+                elif cpuTemp >= self._autoCurveMaxTemp:
+                    targetRpm = self._autoCurveMaxRpm
+                else:
+                    t = (cpuTemp - self._autoCurveMinTemp) / (self._autoCurveMaxTemp - self._autoCurveMinTemp)
+                    targetRpm = int(self._autoCurveMinRpm + t * (self._autoCurveMaxRpm - self._autoCurveMinRpm))
+                pct = int(round(targetRpm / self._autoCurveMaxRpm * 100))
+                pct = max(0, min(100, pct))
+                self._awcc.setFanSpeed(self._awcc.CPUFanIdx, pct)
+                self._awcc.setFanSpeed(self._awcc.GPUFanIdx, pct)
+                # Update sliders to show current auto speed
+                self._thermalCPU.setSpeedSlider(pct)
+                self._thermalGPU.setSpeedSlider(pct)
 
             # Update tray icon
             self.trayIcon = self.trayIcon.resizeForScreen() or self.trayIcon
@@ -698,7 +737,36 @@ def runApp(startMinimized = False) -> int:
         QComboBox::disabled {{
             color: {Colors.GREY.value};
         }}
+        QRadioButton {{
+            spacing: 6px;
+            padding: 1px 2px;
+        }}
+        QRadioButton::indicator {{
+            width: 12px;
+            height: 12px;
+            border-radius: 7px;
+            border: 1px solid {Colors.GREY.value};
+            background: {Colors.DARK_GREY.value};
+        }}
+        QRadioButton::indicator:checked {{
+            border: 3px solid {Colors.BLUE.value};
+            background: {Colors.WHITE.value};
+        }}
+        QRadioButton::indicator:disabled {{
+            border-color: {Colors.DARK_GREY.value};
+        }}
+        QRadioButton:checked {{
+            font-weight: bold;
+            color: {Colors.WHITE.value};
+        }}
+        QRadioButton:disabled {{
+            color: {Colors.GREY.value};
+        }}
     """)
+
+    # The style sheet above changes font metrics (bold when checked), so the window has to be
+    # re-fitted after it is applied - otherwise the mode row ends up outside the window.
+    mainWindow.adjustSize()
 
     if startMinimized:
         mainWindow.showMinimized()

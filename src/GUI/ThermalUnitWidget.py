@@ -19,6 +19,16 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         self._fanBar, _fanBarLabel = self._makeGaugeWithLabel(fanMinMax, ' RPM')
 
         self._speedSliderCallback = None
+
+        # Values arrive once every poll and the firmware steps the fans in ~200 rpm jumps;
+        # animate towards the new reading so the bars move smoothly instead of snapping.
+        self._tempShown = 0.0
+        self._tempTarget = 0.0
+        self._rpmShown = 0.0
+        self._rpmTarget = 0.0
+        self._animTimer = QtCore.QTimer(self)
+        self._animTimer.setInterval(50)
+        self._animTimer.timeout.connect(self._stepAnimation)
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._speedSlider.setMaximum(sliderMaxAndTick[0])
         self._speedSlider.setTickInterval(sliderMaxAndTick[1])
@@ -68,13 +78,45 @@ class ThermalUnitWidget(QtWidgets.QWidget):
             self._subTitle.show()
 
     def setTemp(self, temp: int) -> None:
-        self._tempBar.setValue(temp)
+        self._tempTarget = float(temp)
+        self._startAnimation()
 
     def getTemp(self) -> int:
-        return self._tempBar.value()
+        return int(round(self._tempTarget)) if self._tempTarget else self._tempBar.value()
 
     def setFanRPM(self, rpm: int) -> None:
-        self._fanBar.setValue(rpm)
+        self._rpmTarget = float(rpm)
+        self._startAnimation()
+
+    def setSourceNote(self, note: str) -> None:
+        self._tempBar.setToolTip(note)
+
+    def _startAnimation(self) -> None:
+        if not self._animTimer.isActive():
+            self._animTimer.start()
+
+    @QtCore.Slot()
+    def _stepAnimation(self) -> None:
+        tempDone = self._approach('_tempShown', '_tempTarget', self._tempBar, 0.25)
+        rpmDone = self._approach('_rpmShown', '_rpmTarget', self._fanBar, 0.16)
+        if tempDone and rpmDone:
+            self._animTimer.stop()
+
+    def _approach(self, shownAttr: str, targetAttr: str, bar, factor: float) -> bool:
+        shown = getattr(self, shownAttr)
+        target = getattr(self, targetAttr)
+        delta = target - shown
+        if abs(delta) < 1:
+            setattr(self, shownAttr, target)
+            bar.setValue(int(round(target)))
+            return True
+        step = delta * factor
+        if abs(step) < 1:
+            step = 1 if delta > 0 else -1
+        shown += step
+        setattr(self, shownAttr, shown)
+        bar.setValue(int(round(shown)))
+        return False
 
     def speedSliderChanged(self, callback: Callable) -> None:
         self._speedSliderCallback = callback
