@@ -268,7 +268,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.1"
+    APP_VERSION = "1.8.2"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -602,6 +602,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
         def updateAppState():
             self._touchHeartbeat()
+            self._ensureWatchdogRunning()
 
             # NVML direct driver reading
             nvmlGpu = self._gpuTemp.read()
@@ -759,6 +760,32 @@ class TCC_GUI(QtWidgets.QWidget):
         if getattr(self, '_gpuTemp', None) is not None:
             self._gpuTemp.shutdown()
 
+    def _isWatchdogAlive(self) -> bool:
+        if getattr(self, '_watchdog', None) is not None:
+            return self._watchdog.poll() is None
+        pid = getattr(self, '_watchdogPid', None)
+        if pid:
+            try:
+                import ctypes
+                PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+                STILL_ACTIVE = 259
+                hProcess = ctypes.windll.kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+                if not hProcess:
+                    return False
+                exit_code = ctypes.c_ulong()
+                ctypes.windll.kernel32.GetExitCodeProcess(hProcess, ctypes.byref(exit_code))
+                ctypes.windll.kernel32.CloseHandle(hProcess)
+                return exit_code.value == STILL_ACTIVE
+            except Exception:
+                return False
+        return False
+
+    def _ensureWatchdogRunning(self) -> None:
+        if getattr(self, '_watchdogShuttingDown', False):
+            return
+        if not self._isWatchdogAlive():
+            self._startWatchdog()
+
     def _startWatchdog(self) -> None:
         cmd = watchdogCommand(HEARTBEAT_FILE)
         if not cmd:
@@ -785,6 +812,7 @@ class TCC_GUI(QtWidgets.QWidget):
             pass
 
     def _stopWatchdog(self) -> None:
+        self._watchdogShuttingDown = True
         if getattr(self, '_watchdogPid', None):
             try:
                 import wmi

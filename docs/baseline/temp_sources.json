@@ -1,102 +1,67 @@
 {
   "idle": [
     {
-      "t": 1793685411.7,
+      "t": 1793731313.3,
       "acpi_zones": {
         "error": "x_wmi"
       },
       "perf_zones": {},
       "awcc": {
-        "sensor_temps": [
-          63,
-          50
-        ],
-        "fan_rpm": [
-          4573,
-          3414
-        ]
+        "error": "CannotInstAWCCWMI: Couldn't instantiate AWCC WMI class"
       },
-      "nvml_gpu": 49
+      "nvml_gpu": 52
     }
   ],
   "load_0": [
     {
-      "t": 1793685422.3,
+      "t": 1793731325.6,
       "acpi_zones": {
         "error": "x_wmi"
       },
       "perf_zones": {},
       "awcc": {
-        "sensor_temps": [
-          84,
-          53
-        ],
-        "fan_rpm": [
-          4542,
-          3444
-        ]
+        "error": "CannotInstAWCCWMI: Couldn't instantiate AWCC WMI class"
       },
-      "nvml_gpu": 51
+      "nvml_gpu": 54
     }
   ],
   "load_1": [
     {
-      "t": 1793685432.6,
+      "t": 1793731335.8,
       "acpi_zones": {
         "error": "x_wmi"
       },
       "perf_zones": {},
       "awcc": {
-        "sensor_temps": [
-          84,
-          54
-        ],
-        "fan_rpm": [
-          4562,
-          3456
-        ]
+        "error": "CannotInstAWCCWMI: Couldn't instantiate AWCC WMI class"
       },
-      "nvml_gpu": 52
+      "nvml_gpu": 54
     }
   ],
   "load_2": [
     {
-      "t": 1793685443.0,
+      "t": 1793731346.0,
       "acpi_zones": {
         "error": "x_wmi"
       },
       "perf_zones": {},
       "awcc": {
-        "sensor_temps": [
-          85,
-          55
-        ],
-        "fan_rpm": [
-          4562,
-          3480
-        ]
+        "error": "CannotInstAWCCWMI: Couldn't instantiate AWCC WMI class"
       },
-      "nvml_gpu": 53
+      "nvml_gpu": 54
     }
   ],
   "after": [
     {
-      "t": 1793685448.5,
+      "t": 1793731351.1,
       "acpi_zones": {
         "error": "x_wmi"
       },
       "perf_zones": {},
       "awcc": {
-        "sensor_temps": [
-          62,
-          54
-        ],
-        "fan_rpm": [
-          4583,
-          3420
-        ]
+        "error": "CannotInstAWCCWMI: Couldn't instantiate AWCC WMI class"
       },
-      "nvml_gpu": 52
+      "nvml_gpu": 54
     }
   ]
 }

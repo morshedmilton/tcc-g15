@@ -3,3 +3,4 @@
 pytest==9.2.0
 pyinstaller==6.22.3
 psutil==7.2.2
+cyclonedx-bom==7.6.0

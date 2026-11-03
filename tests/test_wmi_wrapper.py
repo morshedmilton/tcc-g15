@@ -109,3 +109,23 @@ def test_invalid_wmi_returns_none():
 
     assert AWCCWmiWrapper(NegativeWmi()).GetFanRPMPercent(0x32) is None
     assert AWCCWmiWrapper(OverflowWmi()).GetSensorTemperature(1) is None
+
+
+def test_thermal_mode_apply_retry():
+    """Test that ApplyThermalMode retries once on transient WMI communication failure."""
+    class FlakyAwcc(FakeAwcc):
+        def __init__(self):
+            super().__init__({0xA1})
+            self.attempt = 0
+
+        def Thermal_Control(self, arg):
+            self.calls.append(("TC", arg))
+            self.attempt += 1
+            if self.attempt == 1:
+                return (-1,)  # First attempt fails
+            return (0,)  # Second attempt (retry) succeeds
+
+    fake = FlakyAwcc()
+    wrapper = AWCCWmiWrapper(fake)
+    assert wrapper.ApplyThermalMode(wrapper.ThermalMode.Performance) is True
+    assert fake.attempt == 2, "Expected 2 attempts (initial + 1 retry)"

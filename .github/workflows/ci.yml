@@ -50,6 +50,11 @@ jobs:
 
         Copy-Item -Path "dist\tcc-watchdog.exe" -Destination "dist\tcc-g15\tcc-watchdog.exe" -Force
 
+    - name: Generate CycloneDX SBOM
+      run: |
+        cyclonedx-py requirements requirements.txt -o dist/tcc-g15/tcc-g15-sbom.json
+        Copy-Item -Path "dist\tcc-g15\tcc-g15-sbom.json" -Destination "dist\tcc-g15-sbom.json" -Force
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:

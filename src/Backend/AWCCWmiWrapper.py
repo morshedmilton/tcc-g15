@@ -1,5 +1,6 @@
+import time
 from enum import Enum
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 from wmi import _wmi_object # type: ignore
 
 class AWCCWmiWrapper:
@@ -77,12 +78,22 @@ class AWCCWmiWrapper:
 
         cached = self._resolvedModes.get(mode)
         if cached is not None:
-            return cached is not False and self._Thermal_Control(cached)
+            if cached is False:
+                return False
+            ok = self._Thermal_Control(cached)
+            if not ok:
+                time.sleep(0.25)
+                ok = self._Thermal_Control(cached)
+            return ok
 
         # First use of this mode on this firmware: the probe call is itself the apply,
         # so a 0 answer means the mode is now set and there is nothing left to do.
         for candidate in [c for c in (self._USTT_IDS.get(mode), mode.value) if c is not None]:
-            if self._Thermal_Control(candidate):
+            ok = self._Thermal_Control(candidate)
+            if not ok:
+                time.sleep(0.25)
+                ok = self._Thermal_Control(candidate)
+            if ok:
                 self._resolvedModes[mode] = candidate
                 print(f'Mode {mode.name} resolved to {hex(candidate)}')
                 return True

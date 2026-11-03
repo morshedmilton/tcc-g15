@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-11-04
+
+### Added
+- **Machine-Readable CycloneDX SBOM:** Automated generation of `tcc-g15-sbom.json` (CycloneDX v1.6) in the build and CI pipelines, providing cryptographic supply-chain verification.
+- **Watchdog Auto-Resurrection:** GUI now verifies the health of the detached watchdog process during periodic background ticks and automatically restarts it if it was terminated, keeping hardware protected at all times.
+
+### Fixed
+- **Watchdog Sleep / Standby Resilience:** Watchdog now tracks monotonic loop elapsed time (`time.monotonic()`) across sleep intervals to detect operating system suspend (lid close / modern standby / S3 sleep). On resume, it grants a grace window instead of prematurely triggering a false emergency mode restore and exiting.
+- **Thermal Mode Application Retry:** Added transient retry logic in `AWCCWmiWrapper.ApplyThermalMode` to handle brief WMI ACPI bus contention before concluding a mode is unsupported.
+
+---
+
 ## [1.8.1] - 2026-11-04
 
 ### Fixed
