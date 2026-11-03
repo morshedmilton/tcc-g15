@@ -100,11 +100,21 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 
 ---
 
-## Phase 6 — Hardening ⬜ PENDING
+## Phase 6 — Hardening 🔄 PARTIAL
 
----
+| Item | Status |
+|---|---|
+| Packaged build verified (window, watchdog exe, RAM flat) | ✅ |
+| Sleep/resume, lid close, AC↔battery | ⬜ |
+| 2 h soak | ⬜ |
+| Clean install / upgrade / uninstall | ⬜ (installer built, not run) |
 
-## Phase 7 — Release (Gate 2) ⬜ PENDING
+## Phase 7 — Release (Gate 2) 🔄 BETA PUBLISHED
+
+`v1.8.0-beta1` pre-release is live with the installer + SHA-256:
+https://github.com/morshedmilton/tcc-g15/releases/tag/v1.8.0-beta1
+
+Stable tag waits for Gate 2 (your approval after the manual test).
 
 ---
 
@@ -126,6 +136,6 @@ Gaps: no GPU-load run, no 2 h soak, no sleep/resume (all Phase 6).
 
 ## Next Actions (Immediate)
 
-1. Package 1.8.0-beta1: PyInstaller exes (app + watchdog) + Inno installer
-2. Soak + sleep/resume checks (Phase 6)
-3. Gate 2 evidence pack for the beta tag
+1. You install `tcc-g15-installer-1.8.0-beta1.exe` and use it normally
+2. I collect issues → fix → 1.8.0 stable (Gate 2)
+3. Phase 6 leftovers: sleep/resume, 2 h soak, install/uninstall cycle
