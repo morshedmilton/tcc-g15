@@ -18,17 +18,17 @@ where each factor is an integer from 1 to 5.
 | `OPP-002` | Reliability | Watchdog heartbeat resilience across sleep/standby + GUI resurrection | 5 | 5 | 5 | 2 | 1 | **62.5** | **P1** | **VERIFIED (Cycle 2)** |
 | `OPP-003` | Safety | Thermal mode application retry on transient WMI communication failure | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 2)** |
 | `OPP-004` | Supply | Automated machine-readable SBOM (CycloneDX) in build pipeline | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 2)** |
-| `OPP-001` | Perf | Background worker thread for telemetry polling (decouple WMI from GUI thread) | 4 | 5 | 5 | 2 | 1 | **50.0** | **P1** | **SCOPED (Cycle 3)** |
-| `OPP-005` | Arch | Strongly-typed `TelemetrySnapshot` immutable data transfer object | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **SCOPED (Cycle 3)** |
-| `OPP-006` | Obs | Real-time session telemetry export to CSV/JSON for thermal profiling | 3 | 4 | 3 | 2 | 1 | **18.0** | **P2** | BACKLOG (Cycle 4) |
+| `OPP-001` | Perf | Background worker thread for telemetry polling (decouple WMI from GUI thread) | 4 | 5 | 5 | 2 | 1 | **50.0** | **P1** | **VERIFIED (Cycle 3)** |
+| `OPP-005` | Arch | Strongly-typed `TelemetrySnapshot` immutable data transfer object | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **VERIFIED (Cycle 3)** |
+| `OPP-006` | Obs | Real-time session telemetry export to CSV/JSON for thermal profiling | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 4)** |
+| `OPP-007` | Safety | Thermal throttling excursion metrics and sustained overload warnings | 3 | 4 | 4 | 2 | 1 | **24.0** | **P2** | BACKLOG (Cycle 5) |
 
 ---
 
-## 2. Cycle 3 Scope (Current)
+## 2. Cycle 4 Scope (Current)
 
 In accordance with Master Directive §5 Phase 3:
-1. **`OPP-001` (P1 - Performance & Responsiveness):** Decouple WMI and NVML synchronous polling from the Qt Main Event Loop using `TelemetryWorker` running in a dedicated `QtCore.QThread`.
-2. **`OPP-005` (P1 - Architecture & Type Safety):** Introduce `TelemetrySnapshot` dataclass ensuring atomic, thread-safe, immutable sensor state transfer.
+1. **`OPP-006` (P1 - Observability & Diagnostics):** Real-time session telemetry export to standard RFC 4180 CSV, bounded log rotation (max 5 sessions, max 10MB per file), tray menu controls, and diagnostics bug report integration.
 
 ---
 

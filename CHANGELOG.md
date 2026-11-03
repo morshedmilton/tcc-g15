@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.4] - 2026-11-04
+
+### Added
+- **Bounded Session Telemetry Logging (`OPP-006` / ADR-004):** Comprehensive session hardware telemetry logging in standard RFC 4180 CSV format (`%LOCALAPPDATA%\tcc-g15\telemetry\session_<YYYYMMDD_HHMMSS>.csv`). Logs timestamps, CPU/GPU temperatures, fan RPMs, thermal modes, and AC power status.
+- **Strict Bounded Retention & Size Guard:** Automatic size capping (10 MB per file) and bounded rotation (retaining maximum 5 recent sessions) to guarantee zero unbounded disk accumulation on user systems.
+- **System Tray Controls & Persistence:** Added "Session telemetry logging" toggle and "Open logs directory" menu actions with preference persistence (`app/telemetry_logging`).
+- **Diagnostics Bug Report Integration:** Automatic inclusion of the most recent session `telemetry.csv` inside `bugreport-<stamp>.zip` for rapid hardware issue triage.
+- **Unit Test Coverage:** 6 unit tests in `tests/test_telemetry_logger.py` validating CSV formatting, size caps, pruning, disabled state, and zip bundle integration.
+
+---
+
 ## [1.8.3] - 2026-11-04
 
 ### Added

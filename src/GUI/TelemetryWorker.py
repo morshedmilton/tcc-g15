@@ -94,7 +94,7 @@ class TelemetryWorker(QtCore.QObject):
         self.pollOnce()
 
     @QtCore.Slot()
-    def pollOnce(self) -> Optional[TelemetrySnapshot]:
+    def pollOnce(self, emitSignal: bool = True) -> Optional[TelemetrySnapshot]:
         """Executes a single hardware reading cycle and emits TelemetrySnapshot."""
         if not self._running:
             return None
@@ -146,10 +146,12 @@ class TelemetryWorker(QtCore.QObject):
                 is_ac_power=acPower,
                 timestamp=time.time()
             )
-            self.telemetryReady.emit(snapshot)
+            if emitSignal:
+                self.telemetryReady.emit(snapshot)
             return snapshot
         except Exception as ex:
-            self.telemetryError.emit(f"Telemetry poll exception: {ex}")
+            if emitSignal:
+                self.telemetryError.emit(f"Telemetry poll exception: {ex}")
             return None
 
     @QtCore.Slot(int)

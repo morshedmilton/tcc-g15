@@ -1,10 +1,10 @@
 # TCC-G15 Evolution Engineering Control State
 
-**Cycle:** 003 (COMPLETED)  
-**Target Release:** v1.8.3  
-**Current Git Branch:** `main`  
-**Status:** Cycle 003 Complete & Shipped; Ready for Cycle 004  
-**Last Updated:** 2026-11-04T01:47:00+06:00  
+**Cycle:** 004  
+**Target Release:** v1.8.4 (Observability, Telemetry Logger & Diagnostics)  
+**Current Git Branch:** `cycle-004/telemetry-logger-observability`  
+**Status:** Verification & Packaging Complete (Phases 0–8)  
+**Last Updated:** 2026-11-04T02:15:00+06:00  
 
 ---
 
@@ -12,33 +12,33 @@
 
 | Gate | Description | Signed By | Status | Evidence / Notes |
 |---|---|---|---|---|
-| **G0** | Delta Reconnaissance | Orchestrator, Reviewer L | **PASSED** | Clean git tree, Cycle 002 release verified |
-| **G1** | Research & Delta Intel | Orchestrator, Reviewer L | **PASSED** | COM apartment threading & QThread architecture researched |
-| **G2** | Forensic Audit (Delta) | Safety E, Security I, Reviewer L | **PASSED** | Audited GUI main thread blocking on synchronous WMI calls |
-| **G3** | Prioritization & Scope | Orchestrator, Reviewer L | **PASSED** | Scoped OPP-001 (Worker thread) & OPP-005 (TelemetrySnapshot) |
-| **G4** | Requirements & Traceability | Orchestrator, QA J | **PASSED** | PRD.md updated with Cycle 003 requirements |
-| **G5** | System Design & ADRs | Architect B, Safety E, Reviewer L | **PASSED** | ADR-003 drafted and accepted |
-| **G6** | Implementation Verification | QA J, Reviewer L | **PASSED** | Code, tests, and configs implemented |
-| **G7** | Multi-level Verification & HIL | QA J, Safety E | **PASSED** | 30/30 unit/integration tests passed; check_env green |
-| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PR #3 merged, tag v1.8.3 pushed, release published |
-| **G9** | Cycle Evaluation & Learning | Orchestrator A | **PASSED** | CYCLE-003.md signed off |
+| **G0** | Delta Reconnaissance | Orchestrator, Reviewer L | **PASSED** | Baseline audited, clean git tree verified |
+| **G1** | Research & Delta Intel | Orchestrator, Reviewer L | **PASSED** | RFC 4180 CSV & bounded file retention researched |
+| **G2** | Forensic Audit (Delta) | Safety E, Security I, Reviewer L | **PASSED** | Zero-impact I/O audit for fail-safe non-interference |
+| **G3** | Prioritization & Scope | Orchestrator, Reviewer L | **PASSED** | Scoped OPP-006 (Telemetry Logger & Diagnostics) |
+| **G4** | Requirements & Traceability | Orchestrator, QA J | **PASSED** | PRD.md updated with Cycle 004 requirements |
+| **G5** | System Design & ADRs | Architect B, Safety E, Reviewer L | **PASSED** | ADR-004 accepted |
+| **G6** | Implementation Verification | QA J, Reviewer L | **PASSED** | TelemetryLogger, AppGUI, Diagnostics, TelemetryWorker updated |
+| **G7** | Multi-level Verification & HIL | QA J, Safety E | **PASSED** | 36/36 tests passing in 4.76s; ruff & check_env 100% green |
+| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller build, SBOM, Inno Setup v1.8.4 installer compiled |
+| **G9** | Cycle Evaluation & Learning | Orchestrator A | IN_PROGRESS | PR merge, GitHub release publish, CYCLE-004.md sign-off |
 
 ---
 
-## 2. Completed Tasks in Cycle 003
+## 2. Active Tasks & Status
 
 | Task ID | Description | Role | Status | Evidence |
 |---|---|---|---|---|
-| `TASK-301` | Create git feature branch `cycle-003/telemetry-worker-thread` | DevOps | **DONE** | PR #3 merged |
-| `TASK-302` | Create `src/Backend/TelemetryTypes.py` dataclass model (`OPP-005`) | Architect B / HAL | **DONE** | File created |
-| `TASK-303` | Create `src/GUI/TelemetryWorker.py` with QThread & COM handling (`OPP-001`) | Systems G / GUI H | **DONE** | Worker implemented |
-| `TASK-304` | Wire `TelemetryWorker` signals/slots in `src/GUI/AppGUI.py` | GUI H | **DONE** | AppGUI decoupled |
-| `TASK-305` | Maintain graceful thread teardown in `TCC_GUI._destroy()` | Systems G / QA J | **DONE** | Destruction lifecycle clean |
-| `TASK-306` | Write unit tests in `tests/test_telemetry_worker.py` | QA J | **DONE** | 6 new unit tests |
-| `TASK-307` | Full test execution & regression verification | QA J | **DONE** | pytest 30/30, ruff green |
-| `TASK-308` | Synchronize documentation & release notes | Orchestrator | **DONE** | RELEASE_NOTES_1.8.3.md, CHANGELOG.md |
-| `TASK-309` | Package binaries, compile SBOM, build installer | DevOps K | **DONE** | Inno Setup, zip, SBOM with SHA-256 |
-| `TASK-310` | Merge, tag `v1.8.3`, publish GitHub pre-release | Orchestrator | **DONE** | Release: https://github.com/morshedmilton/tcc-g15/releases/tag/v1.8.3 |
+| `TASK-401` | Create git feature branch `cycle-004/telemetry-logger-observability` | DevOps | **DONE** | Branch active |
+| `TASK-402` | Create `src/Backend/TelemetryLogger.py` with rotation guard (`OPP-006`) | Architect B / HAL | **DONE** | Implemented & verified |
+| `TASK-403` | Integrate `TelemetryLogger` into `TCC_GUI` & tray menu | GUI H | **DONE** | AppGUI updated |
+| `TASK-404` | Integrate session logs into `Diagnostics.build()` bug report | Systems G / GUI H | **DONE** | Diagnostics updated |
+| `TASK-405` | Maintain graceful file close in `TCC_GUI._destroy()` | Systems G / QA J | **DONE** | Clean lifecycle verified |
+| `TASK-406` | Write unit tests in `tests/test_telemetry_logger.py` | QA J | **DONE** | 6 new tests added |
+| `TASK-407` | Full test execution & regression verification | QA J | **DONE** | 36/36 passing |
+| `TASK-408` | Synchronize documentation & release notes | Orchestrator | **DONE** | CHANGELOG.md, RELEASE_NOTES_1.8.4.md |
+| `TASK-409` | Package binaries, compile SBOM, build installer | DevOps K | **DONE** | Installer & zip compiled |
+| `TASK-410` | Merge, tag `v1.8.4`, publish GitHub release | Orchestrator | IN_PROGRESS | Awaiting PR merge |
 
 ---
 
@@ -47,5 +47,5 @@
 
 ---
 
-## 4. Next Scope Preview (Cycle 004)
-- `OPP-006` (Observability): Export real-time metrics to CSV/JSON log file for thermal profiling and fan calibration.
+## 4. Next Scope Preview (Cycle 005)
+- Automated ACPI EC Fan Curve calibration & profiling (`OPP-007`).
