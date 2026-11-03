@@ -240,6 +240,22 @@ APP_STYLESHEET = """
     }
 """
 
+
+class CyberSafeButton(QtWidgets.QPushButton):
+    """Tactical Safeguard PushButton with proper child layout size hinting to prevent clipping."""
+    def sizeHint(self) -> QtCore.QSize:
+        if self.layout():
+            layout_hint = self.layout().sizeHint()
+            return QtCore.QSize(max(114, layout_hint.width() + 8), max(24, layout_hint.height()))
+        return super().sizeHint()
+
+    def minimumSizeHint(self) -> QtCore.QSize:
+        if self.layout():
+            layout_min = self.layout().minimumSize()
+            return QtCore.QSize(max(114, layout_min.width() + 8), max(24, layout_min.height()))
+        return super().minimumSizeHint()
+
+
 class TCC_GUI(QtWidgets.QWidget):
     TEMP_UPD_PERIOD_MS = 2000
     TEMP_UPD_PERIOD_MS_HIDDEN = 5000
@@ -407,15 +423,15 @@ class TCC_GUI(QtWidgets.QWidget):
         deckBox.addWidget(techDivider)
 
         # 3. Tactical Safeguard Module (Fail-Safe)
-        self._failsafeBtn = QtWidgets.QPushButton()
+        self._failsafeBtn = CyberSafeButton()
         self._failsafeBtn.setObjectName("CyberSafeButton")
         self._failsafeBtn.setCursor(QtCore.Qt.PointingHandCursor)
         self._failsafeBtn.setFixedHeight(24)
-        self._failsafeBtn.setMinimumWidth(80)
+        self._failsafeBtn.setMinimumWidth(114)
 
         failsafeInner = QtWidgets.QHBoxLayout(self._failsafeBtn)
-        failsafeInner.setContentsMargins(4, 2, 4, 2)
-        failsafeInner.setSpacing(3)
+        failsafeInner.setContentsMargins(3, 2, 3, 2)
+        failsafeInner.setSpacing(2)
 
         failsafeIndicator = QtWidgets.QLabel("▲")
         failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 9px; font-weight: 900;")
@@ -440,6 +456,7 @@ class TCC_GUI(QtWidgets.QWidget):
             color = "#00FF66" if self._failsafeOn else "#4A5262"
             statusText = "ARMED" if self._failsafeOn else "DISARMED"
             self._failsafeThresholdBadge.setText(f"{self.FAILSAFE_GPU_TEMP}°/{self.FAILSAFE_CPU_TEMP}°")
+            self._failsafeBtn.updateGeometry()
             msg = f"SAFEGUARD: {statusText} (GPU >= {self.FAILSAFE_GPU_TEMP}°C, CPU >= {self.FAILSAFE_CPU_TEMP}°C)\nClick to toggle. Right-click to calibrate trip limits."
 
             if self._failsafeTempIsHighTs > 0:

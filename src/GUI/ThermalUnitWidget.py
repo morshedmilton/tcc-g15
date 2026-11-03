@@ -176,24 +176,32 @@ class ThermalUnitWidget(QtWidgets.QFrame):
     def setTitle(self, title: Optional[str]) -> None:
         clean_title = (title or "").replace("//", "").strip()
         upper = clean_title.upper()
-        is_gpu = (
-            self._hardwareType == "GPU"
-            or "GPU" in upper
-            or "RTX" in upper
-            or "GTX" in upper
-            or "GEFORCE" in upper
-            or "GRAPHICS" in upper
-            or "RADEON" in upper
-            or "ARC" in upper
-        )
-        is_cpu = (
-            self._hardwareType == "CPU"
-            or "CPU" in upper
-            or "CORE" in upper
-            or "INTEL" in upper
-            or "RYZEN" in upper
-        )
-        if is_gpu and self._hardwareType != "CPU":
+
+        if self._hardwareType == "GPU":
+            is_gpu = True
+            is_cpu = False
+        elif self._hardwareType == "CPU":
+            is_gpu = False
+            is_cpu = True
+        else:
+            import re
+            is_cpu = (
+                "CPU" in upper
+                or "CORE" in upper
+                or "RYZEN" in upper
+                or bool(re.search(r'i[3579]-\w+', upper))
+            )
+            is_gpu = not is_cpu and (
+                "GPU" in upper
+                or "RTX" in upper
+                or "GTX" in upper
+                or "GEFORCE" in upper
+                or "GRAPHICS" in upper
+                or "RADEON" in upper
+                or "ARC" in upper
+            )
+
+        if is_gpu:
             self._hardwareType = "GPU"
             self._icon.setType("GPU")
             self._tagPill.setText("LIVE")
@@ -210,15 +218,24 @@ class ThermalUnitWidget(QtWidgets.QFrame):
             if "RTX" in upper:
                 idx = upper.find("RTX")
                 parts = clean_title[idx:].split()
-                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+                if len(parts) >= 3 and parts[2].upper() == "TI":
+                    display_title = f"{parts[0]} {parts[1]} TI".upper()
+                else:
+                    display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
             elif "GTX" in upper:
                 idx = upper.find("GTX")
                 parts = clean_title[idx:].split()
-                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+                if len(parts) >= 3 and parts[2].upper() == "TI":
+                    display_title = f"{parts[0]} {parts[1]} TI".upper()
+                else:
+                    display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
             elif "RX" in upper:
                 idx = upper.find("RX")
                 parts = clean_title[idx:].split()
-                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+                if len(parts) >= 3 and parts[2].upper() in ("XT", "XTX"):
+                    display_title = f"{parts[0]} {parts[1]} {parts[2]}".upper()
+                else:
+                    display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
             elif "RADEON" in upper:
                 display_title = "RADEON"
             elif "ARC" in upper:
@@ -242,7 +259,13 @@ class ThermalUnitWidget(QtWidgets.QFrame):
             import re
             m = re.search(r'(i[3579]-\w+|Ultra\s*\d+\s*\w*|Ryzen\s*\d+\s*\w*)', clean_title, re.IGNORECASE)
             if m:
-                display_title = m.group(1).upper()
+                raw = m.group(1)
+                if re.match(r'Ryzen\s*[3579]\s*\w+', raw, re.IGNORECASE):
+                    display_title = re.sub(r'Ryzen\s*([3579])\s*', r'R\1 ', raw, flags=re.IGNORECASE).upper()
+                elif re.match(r'Ultra\s*[3579]\s*\w+', raw, re.IGNORECASE):
+                    display_title = re.sub(r'Ultra\s*([3579])\s*', r'U\1 ', raw, flags=re.IGNORECASE).upper()
+                else:
+                    display_title = raw.upper()
             else:
                 display_title = "CPU"
         else:

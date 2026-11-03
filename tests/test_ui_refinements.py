@@ -94,11 +94,33 @@ def test_no_double_slash_prefix_and_hardware_vector_icons(qapp):
     amdGpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
     amdGpuWidget.setTitle("AMD Radeon RX 7700M")
     assert amdGpuWidget._icon._type == "GPU"
-    assert "RX" in amdGpuWidget._title.text() or "RADEON" in amdGpuWidget._title.text()
+    assert amdGpuWidget._title.text() == "RX 7700M"
+
+    amdXtWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
+    amdXtWidget.setTitle("AMD Radeon RX 6600 XT")
+    assert amdXtWidget._title.text() == "RX 6600 XT"
+
+    nvidiaTiWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
+    nvidiaTiWidget.setTitle("NVIDIA GeForce RTX 3050 Ti Laptop GPU")
+    assert nvidiaTiWidget._title.text() == "RTX 3050 TI"
 
     arcGpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
     arcGpuWidget.setTitle("Intel Arc A730M Graphics")
     assert arcGpuWidget._icon._type == "GPU"
+
+    # AMD Ryzen with Radeon Graphics auto-detection without explicit hardwareType
+    ryzenApuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType=None)
+    ryzenApuWidget.setTitle("AMD Ryzen 9 7945HX with Radeon Graphics")
+    assert ryzenApuWidget._icon._type == "CPU"
+    assert ryzenApuWidget._title.text() == "R9 7945HX"
+
+    ryzenHsWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
+    ryzenHsWidget.setTitle("AMD Ryzen 7 7840HS")
+    assert ryzenHsWidget._title.text() == "R7 7840HS"
+
+    ultraCpuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
+    ultraCpuWidget.setTitle("Intel Core Ultra 7 155H")
+    assert ultraCpuWidget._title.text() == "U7 155H"
 
 
 def test_cybergauge_cyberpunk_neon_identity(qapp):
@@ -202,6 +224,29 @@ def test_compact_window_width_between_360_and_400(qapp):
                     # Tag pill must not be clipped
                     assert card._tagPill.width() >= card._tagPill.sizeHint().width(), (
                         f"Tag pill {card._tagPill.text()} clipped: width {card._tagPill.width()} < sizeHint {card._tagPill.sizeHint().width()}"
+                    )
+
+                # Crucial check: verify that failsafe button and badge do not clip
+                assert window._failsafeBtn.width() >= window._failsafeBtn.sizeHint().width(), (
+                    f"Failsafe button clipped: width {window._failsafeBtn.width()} < sizeHint {window._failsafeBtn.sizeHint().width()}"
+                )
+                assert window._failsafeThresholdBadge.width() >= window._failsafeThresholdBadge.sizeHint().width(), (
+                    f"Threshold badge clipped: width {window._failsafeThresholdBadge.width()} < sizeHint {window._failsafeThresholdBadge.sizeHint().width()}"
+                )
+
+                # Verify threshold badge across trip limits
+                for g_lim, c_lim in [(85, 95), (90, 100), (70, 80)]:
+                    window._setGpuLimit(g_lim)
+                    window._setCpuLimit(c_lim)
+                    QtWidgets.QApplication.processEvents()
+                    assert window._failsafeThresholdBadge.width() >= window._failsafeThresholdBadge.sizeHint().width(), (
+                        f"Threshold badge {g_lim}/{c_lim} clipped: width {window._failsafeThresholdBadge.width()} < sizeHint {window._failsafeThresholdBadge.sizeHint().width()}"
+                    )
+
+                # Check mode switch buttons do not clip
+                for btn in window._modeSwitch._buttons.values():
+                    assert btn.width() >= btn.sizeHint().width(), (
+                        f"Mode button {btn.text()} clipped: width {btn.width()} < sizeHint {btn.sizeHint().width()}"
                     )
 
                 # Check slider max is 100
