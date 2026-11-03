@@ -12,23 +12,13 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         self._subTitle = QtWidgets.QLabel(self)
         self._subTitle.hide()
         self._subTitle.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
-        self._subTitle.setToolTip("Triple left-click and Crtl+C to copy")
+        self._subTitle.setToolTip("Triple left-click and Ctrl+C to copy")
 
         self._tempBar, _tempBarLabel = self._makeGaugeWithLabel(tempMinMax, ' °C', tempColorLimits)
 
         self._fanBar, _fanBarLabel = self._makeGaugeWithLabel(fanMinMax, ' RPM')
 
         self._speedSliderCallback = None
-
-        # Values arrive once every poll and the firmware steps the fans in ~200 rpm jumps;
-        # animate towards the new reading so the bars move smoothly instead of snapping.
-        self._tempShown = 0.0
-        self._tempTarget = 0.0
-        self._rpmShown = 0.0
-        self._rpmTarget = 0.0
-        self._animTimer = QtCore.QTimer(self)
-        self._animTimer.setInterval(50)
-        self._animTimer.timeout.connect(self._stepAnimation)
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._speedSlider.setMaximum(sliderMaxAndTick[0])
         self._speedSlider.setTickInterval(sliderMaxAndTick[1])
@@ -44,7 +34,10 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         self._speedSliderDebounce.timeout.connect(self._onSpeedSliderChange)
         self._speedSlider.valueChanged.connect(lambda: self._speedSliderDebounce.start())
         
-        grid = QtWidgets.QGridLayout() # type: QtWidgets.QWidget
+        grid = QtWidgets.QGridLayout()
+        grid.setContentsMargins(6, 4, 6, 4)
+        grid.setVerticalSpacing(4)
+        grid.setHorizontalSpacing(6)
         grid.addWidget(self._title,         0, 0, QtCore.Qt.AlignCenter)
         grid.addWidget(self._subTitle,      1, 0, 1, 2, QtCore.Qt.AlignLeft)
         grid.addWidget(self._tempBar,       2, 0, QtCore.Qt.AlignTop)
@@ -78,45 +71,16 @@ class ThermalUnitWidget(QtWidgets.QWidget):
             self._subTitle.show()
 
     def setTemp(self, temp: int) -> None:
-        self._tempTarget = float(temp)
-        self._startAnimation()
+        self._tempBar.setValue(temp)
 
     def getTemp(self) -> int:
-        return int(round(self._tempTarget)) if self._tempTarget else self._tempBar.value()
+        return self._tempBar.value()
 
     def setFanRPM(self, rpm: int) -> None:
-        self._rpmTarget = float(rpm)
-        self._startAnimation()
+        self._fanBar.setValue(rpm)
 
     def setSourceNote(self, note: str) -> None:
         self._tempBar.setToolTip(note)
-
-    def _startAnimation(self) -> None:
-        if not self._animTimer.isActive():
-            self._animTimer.start()
-
-    @QtCore.Slot()
-    def _stepAnimation(self) -> None:
-        tempDone = self._approach('_tempShown', '_tempTarget', self._tempBar, 0.25)
-        rpmDone = self._approach('_rpmShown', '_rpmTarget', self._fanBar, 0.16)
-        if tempDone and rpmDone:
-            self._animTimer.stop()
-
-    def _approach(self, shownAttr: str, targetAttr: str, bar, factor: float) -> bool:
-        shown = getattr(self, shownAttr)
-        target = getattr(self, targetAttr)
-        delta = target - shown
-        if abs(delta) < 1:
-            setattr(self, shownAttr, target)
-            bar.setValue(int(round(target)))
-            return True
-        step = delta * factor
-        if abs(step) < 1:
-            step = 1 if delta > 0 else -1
-        shown += step
-        setattr(self, shownAttr, shown)
-        bar.setValue(int(round(shown)))
-        return False
 
     def speedSliderChanged(self, callback: Callable) -> None:
         self._speedSliderCallback = callback

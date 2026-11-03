@@ -2,7 +2,7 @@
 setlocal
 
 echo === app (onedir) ===
-python -m PyInstaller --noconfirm --clean --windowed --name tcc-g15 ^
+python -m PyInstaller --noconfirm --clean --windowed --uac-admin --name tcc-g15 ^
   --icon=icons/gaugeIcon.ico ^
   --add-data "icons/gaugeIcon.png;icons" ^
   --add-data "tcc_g15_task.xml;." ^

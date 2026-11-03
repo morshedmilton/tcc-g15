@@ -1,0 +1,58 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [ "master", "g15-5530" ]
+  pull_request:
+    branches: [ "master", "g15-5530" ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.13"
+        cache: "pip"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller pytest ruff
+
+    - name: Lint with ruff
+      run: |
+        ruff check src/ tests/ tools/
+
+    - name: Run unit test suite (mocked WMI layer)
+      run: |
+        pytest tests/ -v
+
+    - name: Run regression verification
+      run: |
+        python tools/check_env.py
+
+    - name: Build standalone executables with PyInstaller
+      run: |
+        pyinstaller --noconfirm --clean --windowed --uac-admin --name tcc-g15 `
+          --icon=icons/gaugeIcon.ico `
+          --add-data "icons/gaugeIcon.png;icons" `
+          --add-data "tcc_g15_task.xml;." `
+          --hidden-import PySide6 `
+          --collect-all winrt `
+          src/tcc-g15.py
+
+        pyinstaller --noconfirm --clean --windowed --onefile --name tcc-watchdog `
+          src/tcc-watchdog.py
+
+        Copy-Item -Path "dist\tcc-watchdog.exe" -Destination "dist\tcc-g15\tcc-watchdog.exe" -Force
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: tcc-g15-windows-build
+        path: dist/tcc-g15/

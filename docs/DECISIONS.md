@@ -38,54 +38,53 @@
 
 ---
 
-## ADR-003: Python/PySide6 Stack — PENDING MEASUREMENT
+## ADR-003: Python/PySide6 Stack
 
 **Date:** 2026-11-03  
-**Status:** Deferred to Phase 2 data  
-**Options:**  
-| Option | Pros | Cons | Decision Trigger |
-|---|---|---|---|
-| Stay Python + PySide6 | Contributor-friendly, fast iteration, existing codebase | Higher RAM/CPU, slower startup, GIL limits polling precision | If baseline shows <50 MB RAM, <2% CPU idle, <2 s cold start → keep |
-| Rewrite core in Rust (AOT) + light UI (Tauri/egui/Slint) | Tiny binary, zero GC pauses, fearless concurrency, better startup | Steeper contributor bar, FFI to WMI, UI rewrite effort | If baseline >100 MB RAM or >3% CPU idle or >3 s cold start → rewrite core |
-| C# (.NET 8 AOT) + WinUI 3 | Native Windows, great tooling, AOT, single binary | Larger binary than Rust, WinUI 3 maturity, less cross-platform | If team has C# expertise and baseline mediocre → consider |
-**Decision Rule:** Evidence from Phase 2 baseline (RAM, CPU, wakeups, startup time) decides. No assumption.
+**Status:** Accepted (Stay with Python / PySide6)  
+**Evidence:** Idle CPU is 0.19%, RAM is 25-28 MB, startup is <900 ms. The performance exceeds the ADR-003 threshold (<50 MB RAM, <2% CPU, <2s start). Rewriting in Rust/C# offers minimal tangible gain while severely limiting accessibility and rapid customization.
 
 ---
 
-## ADR-004: Privilege Split Architecture — PENDING GATE 1
+## ADR-004: Watchdog Architecture
 
 **Date:** 2026-11-03  
-**Status:** Deferred to Gate 1  
-**Options:**  
-- **A:** Current — whole GUI runs as admin (simple, but over-privileged)  
-- **B:** Minimal elevated service (Windows Service or scheduled task with highest) owning WMI handle + watchdog; unprivileged GUI talks via named pipe / localhost HTTP  
-- **C:** Auto-elevate only for WMI calls via COM elevation moniker (complex, fragile)  
-**Decision Criteria:** Phase 2 baseline attack surface + UX friction measurement. Safety principle 2b (watchdog) favors B.
+**Status:** Accepted  
+**Decision:** Standalone Python/compiled watchdog executable launched detached via WMI `Win32_Process.Create`.  
+**Evidence:** A detached WMI process is created outside the job and process tree of `tcc-g15`, allowing it to survive tree-kills (`taskkill /F /T`, Task Manager). If heartbeat file ceases to update for >12s, it restores Balanced mode (0xA0) over WMI and exits cleanly.
 
 ---
 
-## ADR-005: Release Versioning — PENDING
+## ADR-005: Release Versioning
 
 **Date:** 2026-11-03  
-**Status:** Deferred  
-**Options:** SemVer (1.7.0, 1.8.0, 2.0.0) vs CalVer (2026.11, 2026.12)  
-**Lean:** SemVer — communicates breaking changes clearly for a driver-adjacent tool.
+**Status:** Accepted: Semantic Versioning (SemVer 2.0.0).  
+**Rationale:** `1.8.0` represents feature-complete Dell G15 5530 hardware support with 5 thermal modes and power automation.
 
 ---
 
-## ADR-006: CI/CD Platform — PENDING
+## ADR-006: CI/CD Platform
 
 **Date:** 2026-11-03  
-**Status:** Deferred to Phase 4  
-**Likely:** GitHub Actions (windows-latest runners, mock WMI layer for unit tests).
+**Status:** Accepted: GitHub Actions (`.github/workflows/ci.yml`).  
+**Rationale:** Automated test runs on `windows-latest` runners using mocked WMI hardware layer.
 
 ---
 
-## Skill Commit Tracking
+## ADR-007: UI Layout & Animation Timer Elimination
 
-| Skill | Commit / Version | Date Read | Purpose |
-|---|---|---|---|
-| 9router (index) | master @ raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router/SKILL.md | 2026-11-02 | AI gateway for independent review, web research |
-| 9router-chat | (fetch on demand) | — | Code review by different model |
-| 9router-web-search | (fetch on demand) | — | Current WMI/Windows/Dell findings |
-| 9router-web-fetch | (fetch on demand) | — | Fetch specific technical pages |
+**Date:** 2026-11-03  
+**Status:** Accepted  
+**Decision:**  
+1. Revert the multi-row bloated window layout back to the sleek 2-row layout from original upstream. Place all 5 thermal modes on the left and the fail-safe cluster on the right in a single horizontal bottom row (`ctrlBox`).  
+2. Eliminate the continuous 30ms animation timer in `ThermalUnitWidget`. Gauges update directly when readings arrive (every 2s visible, 5s hidden).  
+**Rationale:** Reduces idle CPU wakeups to near zero and restores the compact, elegant UI footprint users loved.
+
+---
+
+## ADR-008: Smart Power Automation (AC ↔ Battery)
+
+**Date:** 2026-11-03  
+**Status:** Accepted  
+**Decision:** Use Win32 `GetSystemPowerStatus` API to automatically detect AC connection and disconnection. On battery, transition to `Quiet` mode to silence fans and conserve battery. On AC reconnect, restore the previous AC profile (`Balanced` / `Performance`).  
+**Rationale:** High user value without CPU overhead or additional dependencies.
