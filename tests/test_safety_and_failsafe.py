@@ -103,6 +103,7 @@ def test_inv1_hard_failsafe_unbypassable(qapp):
                 "INV-1 VIOLATION: Hard fail-safe must trip to G_Mode even when _failsafeOn is False!"
             )
             assert window._failsafeTrippedPrevModeStr == ThermalMode.Balanced.value
+            window._destroy()
     finally:
         HotKey.start = orig_hotkey
         TCC_GUI._startWatchdog = orig_watchdog

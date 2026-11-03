@@ -36,8 +36,22 @@ def main() -> int:
 
     print(f'watchdog: watching {heartbeat}', flush=True)
 
+    suspend_grace_until = 0.0
     while True:
+        t0 = time.monotonic()
         time.sleep(POLL_SEC)
+        elapsed = time.monotonic() - t0
+
+        now_mono = time.monotonic()
+        # If sleep took significantly longer than POLL_SEC, system suspended (sleep/hibernate/modern standby)
+        if elapsed > (POLL_SEC + 4.0):
+            print(f'watchdog: system resume detected (sleep elapsed {elapsed:.1f}s), granting {HEARTBEAT_TIMEOUT_SEC}s grace', flush=True)
+            suspend_grace_until = now_mono + HEARTBEAT_TIMEOUT_SEC
+            continue
+
+        if now_mono < suspend_grace_until:
+            continue
+
         try:
             age = time.time() - heartbeat.stat().st_mtime
         except FileNotFoundError:
