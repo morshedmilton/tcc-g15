@@ -13,6 +13,8 @@ from GUI.QGaugeTrayIcon import QGaugeTrayIcon
 from GUI import HotKey
 from Backend.DetectHardware import DetectHardware, ALLOW_UNSUPPORTED_ENV, SUPPORTED_MODELS
 from Backend.GpuTemp import GpuTemperature
+from Backend.TelemetryTypes import TelemetrySnapshot
+from GUI.TelemetryWorker import TelemetryWorker, sanitizeTemperature, queryAcPowerStatus
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
@@ -53,16 +55,7 @@ class SYSTEM_POWER_STATUS(ctypes.Structure):
 
 def getAcPowerStatus() -> Optional[bool]:
     """Returns True if on AC power, False if on battery, None if unknown."""
-    try:
-        status = SYSTEM_POWER_STATUS()
-        if ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
-            if status.ACLineStatus == 0:
-                return False
-            elif status.ACLineStatus == 1:
-                return True
-    except Exception:
-        pass
-    return None
+    return queryAcPowerStatus()
 
 def watchdogCommand(heartbeatPath: str) -> Optional[list]:
     if getattr(sys, 'frozen', False):
@@ -268,7 +261,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.2"
+    APP_VERSION = "1.8.3"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -553,6 +546,8 @@ class TCC_GUI(QtWidgets.QWidget):
         # Glue GUI to backend
         self.gModeHotKey = None
         self._updateGaugesTask = None
+        self._telemetryThread = None
+        self._telemetryWorker = None
 
         def setFanSpeed(fan: Literal['GPU', 'CPU'], speed: int) -> None:
             self._awcc.setFanSpeed(self._awcc.GPUFanIdx if fan == 'GPU' else self._awcc.CPUFanIdx, speed)
@@ -600,16 +595,14 @@ class TCC_GUI(QtWidgets.QWidget):
         self._modeSwitch.setChecked(ThermalMode.Balanced.value)
         onModeChange(ThermalMode.Balanced.value)
 
-        def updateAppState():
+        def onTelemetryReady(snapshot: TelemetrySnapshot):
             self._touchHeartbeat()
             self._ensureWatchdogRunning()
 
-            # NVML direct driver reading
-            nvmlGpu = self._gpuTemp.read()
-            gpuTemp = self._saneTemp(nvmlGpu if nvmlGpu is not None else self._awcc.getFanRelatedTemp(self._awcc.GPUFanIdx))
-            gpuRPM = self._awcc.getFanRPM(self._awcc.GPUFanIdx)
-            cpuTemp = self._saneTemp(self._awcc.getFanRelatedTemp(self._awcc.CPUFanIdx))
-            cpuRPM = self._awcc.getFanRPM(self._awcc.CPUFanIdx)
+            gpuTemp = snapshot.gpu_temp
+            gpuRPM = snapshot.gpu_rpm
+            cpuTemp = snapshot.cpu_temp
+            cpuRPM = snapshot.cpu_rpm
 
             if gpuTemp is not None: self._thermalGPU.setTemp(gpuTemp)
             if gpuRPM is not None: self._thermalGPU.setFanRPM(gpuRPM)
@@ -618,7 +611,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
             # Smart Power Automation: AC <-> Battery transitions
             if self._autoBatterySwitch:
-                ac = getAcPowerStatus()
+                ac = snapshot.is_ac_power
                 if ac is not None and self._isAcPower is not None and ac != self._isAcPower:
                     currentMode = self._modeSwitch.getChecked()
                     if not ac:
@@ -688,17 +681,36 @@ class TCC_GUI(QtWidgets.QWidget):
             tray.setIcon(self.trayIcon)
             tray.setToolTip(f"GPU: {gpuTemp or '--'} °C    {gpuRPM or '--'} RPM\nCPU: {cpuTemp or '--'} °C    {cpuRPM or '--'} RPM\nMode: {self._modeSwitch.getChecked().replace('_', ' ')}")
 
-            self._updateGaugesTask.setInterval(
-                self.TEMP_UPD_PERIOD_MS if self.isVisible() else self.TEMP_UPD_PERIOD_MS_HIDDEN)
+            if getattr(self, '_telemetryWorker', None) is not None:
+                self._telemetryWorker.setInterval(
+                    self.TEMP_UPD_PERIOD_MS if self.isVisible() else self.TEMP_UPD_PERIOD_MS_HIDDEN)
 
             self._saveAppSettings()
 
         self._loadAppSettings()
 
+        self._onTelemetryReady = onTelemetryReady
+
+        def updateAppState():
+            # Synchronous poll fallback for unit tests or manual refresh
+            if getattr(self, '_telemetryWorker', None) is not None:
+                snapshot = self._telemetryWorker.pollOnce()
+                if snapshot is not None:
+                    onTelemetryReady(snapshot)
+
         self._updateAppState = updateAppState
-        self._updateGaugesTask = QPeriodic(self, self.TEMP_UPD_PERIOD_MS, updateAppState)
-        updateAppState()
-        self._updateGaugesTask.start()
+
+        # Start decoupled background telemetry worker thread
+        self._telemetryThread = QtCore.QThread(self)
+        self._telemetryWorker = TelemetryWorker(
+            awcc=self._awcc,
+            gpuTemp=self._gpuTemp,
+            pollingIntervalMs=self.TEMP_UPD_PERIOD_MS
+        )
+        self._telemetryWorker.moveToThread(self._telemetryThread)
+        self._telemetryThread.started.connect(self._telemetryWorker.start)
+        self._telemetryWorker.telemetryReady.connect(self._onTelemetryReady)
+        self._telemetryThread.start()
 
         self._watchdog = None
         self._watchdogPid = None
@@ -748,6 +760,11 @@ class TCC_GUI(QtWidgets.QWidget):
         if self.gModeHotKey is not None:
             self.gModeHotKey.stop()
             self.gModeHotKey.wait()
+        if getattr(self, '_telemetryWorker', None) is not None:
+            self._telemetryWorker.stop()
+        if getattr(self, '_telemetryThread', None) is not None:
+            self._telemetryThread.quit()
+            self._telemetryThread.wait(1000)
         if self._updateGaugesTask is not None:
             self._updateGaugesTask.stop()
         self._stopWatchdog()
