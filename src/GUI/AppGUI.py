@@ -152,79 +152,78 @@ def errorExit(message: str, message2: Optional[str] = None) -> None:
     alert("Oh-oh", message, QtWidgets.QMessageBox.Icon.Critical, message2=message2)
     sys.exit(1)
 
-APP_STYLESHEET = f"""
-    QWidget#QMainWindow {{
-        background-color: #0b0d13;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
-    }}
+APP_STYLESHEET = """
+    QWidget#QMainWindow {
+        background: rgba(10, 12, 18, 0.82);
+        border: 1px solid rgba(0, 240, 255, 0.35);
+        border-top: 2px solid #00F0FF;
+        font-family: 'Orbitron', 'Cascadia Code', 'Consolas', 'Segoe UI', sans-serif;
+    }
 
-    /* Solid high-contrast telemetry cards (Rule: never glass on content) */
-    QWidget#ThermalCard {{
-        background-color: #141722;
-        border: 1px solid #222738;
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 14px;
-    }}
+    QFrame#CyberCard {
+        background: rgba(16, 20, 30, 0.78);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-top: 2px solid rgba(0, 240, 255, 0.65);
+        border-radius: 4px;
+    }
 
-    /* Floating Unified Liquid Glass Control Bar (Rule: group in GlassEffectContainer) */
-    QFrame#GlassEffectContainer {{
-        background: rgba(24, 28, 40, 0.88);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-top: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 18px;
-    }}
+    QFrame#CyberDeck {
+        background: rgba(14, 18, 28, 0.90);
+        border: 1px solid rgba(0, 240, 255, 0.30);
+        border-bottom: 2px solid #FCEE0A;
+        border-radius: 4px;
+    }
 
-    QPushButton#GlassFailSafeButton {{
+    QPushButton#CyberSafeButton {
+        background: rgba(20, 26, 38, 0.75);
+        border: 1px solid rgba(0, 255, 102, 0.35);
+        border-radius: 2px;
+        padding: 2px 8px;
+    }
+    QPushButton#CyberSafeButton:hover {
+        background: rgba(0, 255, 102, 0.18);
+        border: 1px solid #00FF66;
+    }
+
+    /* Cyberpunk Fan Offset Slider */
+    QSlider::groove:horizontal {
+        height: 5px;
+        background: rgba(255, 255, 255, 0.10);
+        border: 1px solid rgba(0, 240, 255, 0.20);
+        border-radius: 1px;
+    }
+    QSlider::sub-page:horizontal {
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #00F0FF, stop:1 #FCEE0A);
+    }
+    QSlider::sub-page:horizontal:disabled {
         background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        border-radius: 14px;
-    }}
-    QPushButton#GlassFailSafeButton:hover {{
-        background: rgba(255, 255, 255, 0.09);
-        border-color: rgba(255, 255, 255, 0.22);
-    }}
-    QPushButton#GlassFailSafeButton:pressed {{
-        background: rgba(255, 255, 255, 0.16);
-    }}
-
-    /* Apple Liquid Slider */
-    QSlider::groove:horizontal {{
-        height: 4px;
-        background: rgba(255, 255, 255, 0.08);
-        border-radius: 2px;
-    }}
-    QSlider::sub-page:horizontal {{
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {Colors.BLUE.value}, stop:1 {Colors.CYAN.value});
-        border-radius: 2px;
-    }}
-    QSlider::sub-page:horizontal:disabled {{
-        background: rgba(255, 255, 255, 0.04);
-    }}
-    QSlider::handle:horizontal {{
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.25);
+    }
+    QSlider::handle:horizontal {
+        background: #FCEE0A;
+        border: 1px solid #FFFFFF;
         width: 14px;
-        margin-top: -5px;
-        margin-bottom: -5px;
-        border-radius: 7px;
-    }}
-    QSlider::handle:horizontal:hover {{
-        background: #f5f5f7;
-        border-color: {Colors.BLUE.value};
-    }}
-    QSlider::handle:horizontal:disabled {{
-        background: #3a4050;
+        margin-top: -6px;
+        margin-bottom: -6px;
+        border-radius: 2px;
+    }
+    QSlider::handle:horizontal:hover {
+        background: #FFFFFF;
+        border-color: #00F0FF;
+    }
+    QSlider::handle:horizontal:disabled {
+        background: #3A4252;
         border-color: transparent;
-    }}
+    }
 
-    QToolTip {{
-        background: rgba(18, 20, 26, 0.96);
-        color: {Colors.WHITE.value};
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 6px;
+    QToolTip {
+        background: rgba(12, 16, 24, 0.96);
+        color: #00F0FF;
+        border: 1px solid rgba(0, 240, 255, 0.40);
+        border-radius: 2px;
         padding: 5px 8px;
+        font-family: 'Orbitron', 'Cascadia Code', monospace;
         font-size: 11px;
-    }}
+    }
 """
 
 class TCC_GUI(QtWidgets.QWidget):
@@ -330,6 +329,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
         self.setObjectName('QMainWindow')
         self.setWindowTitle(self.APP_NAME)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
         self.setStyleSheet(APP_STYLESHEET)
 
         # Thermal Unit Widgets
@@ -372,49 +372,49 @@ class TCC_GUI(QtWidgets.QWidget):
         lTherm.addWidget(self._thermalGPU)
         lTherm.addWidget(self._thermalCPU)
 
-        # Single Unified Floating Glass Container (iOS 26 Liquid Glass Pattern)
-        glassContainer = QtWidgets.QFrame()
-        glassContainer.setObjectName("GlassEffectContainer")
-        glassBox = QtWidgets.QHBoxLayout(glassContainer)
-        glassBox.setContentsMargins(6, 4, 8, 4)
-        glassBox.setSpacing(10)
+        # Cyberpunk Floating Tactical Deck
+        cyberDeck = QtWidgets.QFrame()
+        cyberDeck.setObjectName("CyberDeck")
+        deckBox = QtWidgets.QHBoxLayout(cyberDeck)
+        deckBox.setContentsMargins(8, 6, 8, 6)
+        deckBox.setSpacing(6)
 
-        # 1. Mode Switch (Glass Segmented Control)
+        # 1. Cyberpunk Tactical Mode Selector
         self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
-        glassBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        deckBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        glassBox.addStretch(1)
+        deckBox.addStretch(1)
 
-        # 2. Subtle Vertical Glass Divider
-        glassDivider = QtWidgets.QFrame()
-        glassDivider.setFrameShape(QtWidgets.QFrame.VLine)
-        glassDivider.setStyleSheet("background: rgba(255, 255, 255, 0.12); width: 1px; max-width: 1px; margin: 4px 0px;")
-        glassBox.addWidget(glassDivider)
+        # 2. Tactical Divider
+        techDivider = QtWidgets.QFrame()
+        techDivider.setFrameShape(QtWidgets.QFrame.VLine)
+        techDivider.setStyleSheet("background: rgba(0, 240, 255, 0.35); width: 1px; max-width: 1px; margin: 4px 4px;")
+        deckBox.addWidget(techDivider)
 
-        # 3. Interactive FailSafe Glass Action Pill
+        # 3. Tactical Safeguard Module (Fail-Safe)
         self._failsafeBtn = QtWidgets.QPushButton()
-        self._failsafeBtn.setObjectName("GlassFailSafeButton")
+        self._failsafeBtn.setObjectName("CyberSafeButton")
         self._failsafeBtn.setCursor(QtCore.Qt.PointingHandCursor)
         self._failsafeBtn.setFixedHeight(30)
-        self._failsafeBtn.setMinimumWidth(168)
+        self._failsafeBtn.setMinimumWidth(185)
 
         failsafeInner = QtWidgets.QHBoxLayout(self._failsafeBtn)
         failsafeInner.setContentsMargins(10, 2, 10, 2)
-        failsafeInner.setSpacing(6)
+        failsafeInner.setSpacing(8)
 
-        failsafeIndicator = QtWidgets.QLabel("●")
-        failsafeIndicator.setStyleSheet("color: #30d158; font-size: 10px; font-weight: 900;")
-        failsafeLabel = QtWidgets.QLabel("Fail-Safe")
-        failsafeLabel.setStyleSheet("color: #f5f5f7; font-size: 11px; font-weight: 600;")
+        failsafeIndicator = QtWidgets.QLabel("▲")
+        failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 11px; font-weight: 900;")
+        failsafeLabel = QtWidgets.QLabel("SAFEGUARD")
+        failsafeLabel.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;")
         self._failsafeThresholdBadge = QtWidgets.QLabel(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
         self._failsafeThresholdBadge.setStyleSheet("""
-            background: rgba(255, 255, 255, 0.08);
-            color: #8e95a5;
+            color: #000000;
+            background: #FCEE0A;
+            font-family: 'Orbitron', monospace;
             font-size: 10px;
-            font-weight: 600;
+            font-weight: bold;
             padding: 2px 6px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
         """)
 
         failsafeInner.addWidget(failsafeIndicator, alignment=QtCore.Qt.AlignVCenter)
@@ -422,20 +422,24 @@ class TCC_GUI(QtWidgets.QWidget):
         failsafeInner.addWidget(self._failsafeThresholdBadge, alignment=QtCore.Qt.AlignVCenter)
 
         def updFailsafeIndicator() -> None:
-            color = "#30d158" if self._failsafeOn else "#6b7280"
-            statusText = "Armed" if self._failsafeOn else "Disarmed"
+            color = "#00FF66" if self._failsafeOn else "#4A5262"
+            statusText = "ARMED" if self._failsafeOn else "DISARMED"
             self._failsafeThresholdBadge.setText(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
-            msg = f"Fail-safe: {statusText} (GPU >= {self.FAILSAFE_GPU_TEMP}°C, CPU >= {self.FAILSAFE_CPU_TEMP}°C)\nClick to toggle. Right-click to adjust limits."
+            msg = f"SAFEGUARD: {statusText} (GPU >= {self.FAILSAFE_GPU_TEMP}°C, CPU >= {self.FAILSAFE_CPU_TEMP}°C)\nClick to toggle. Right-click to calibrate trip limits."
 
             if self._failsafeTempIsHighTs > 0:
-                color = "#ffd60a"
-                msg = f"Last high temp: {time.strftime('%H:%M:%S', time.localtime(self._failsafeTempIsHighTs))}"
+                color = "#FCEE0A"
+                msg = f"LAST HIGH THERMAL EVENT: {time.strftime('%H:%M:%S', time.localtime(self._failsafeTempIsHighTs))}"
                 if self._failsafeTrippedPrevModeStr is not None:
-                    color = "#ff453a"
-                    msg = "Fail-safe ACTIVE: G-Mode forced"
+                    color = "#FF003C"
+                    msg = "SAFEGUARD ACTIVE: G-MODE OVERDRIVE ENGAGED"
 
-            failsafeIndicator.setStyleSheet(f"color: {color}; font-size: 10px; font-weight: 900;")
-            failsafeLabel.setStyleSheet(f"color: {'#f5f5f7' if self._failsafeOn else '#6b7280'}; font-size: 11px; font-weight: 600;")
+            failsafeIndicator.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 900;")
+            failsafeLabel.setStyleSheet(f"color: {'#FFFFFF' if self._failsafeOn else '#4A5262'}; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 800;")
+            self._failsafeThresholdBadge.setStyleSheet(
+                "color: #000000; background: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 2px;" if self._failsafeOn
+                else "color: #7D8799; background: rgba(255, 255, 255, 0.08); font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 2px;"
+            )
             self._failsafeBtn.setToolTip(msg)
 
         self._updFailsafeIndicator = updFailsafeIndicator
@@ -455,48 +459,50 @@ class TCC_GUI(QtWidgets.QWidget):
             menu = QtWidgets.QMenu(self)
             menu.setStyleSheet("""
                 QMenu {
-                    background: #181b24;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
-                    border-radius: 8px;
+                    background: #0E121C;
+                    border: 1px solid #00F0FF;
+                    border-radius: 2px;
                     padding: 4px;
-                    color: #f5f5f7;
+                    color: #FFFFFF;
+                    font-family: 'Orbitron', 'Cascadia Code', monospace;
                     font-size: 11px;
                 }
                 QMenu::item {
-                    padding: 4px 16px;
-                    border-radius: 4px;
+                    padding: 5px 18px;
                 }
                 QMenu::item:selected {
-                    background: rgba(10, 132, 255, 0.5);
+                    background: rgba(0, 240, 255, 0.25);
+                    color: #FCEE0A;
                 }
                 QMenu::separator {
                     height: 1px;
-                    background: rgba(255, 255, 255, 0.10);
+                    background: rgba(0, 240, 255, 0.30);
                     margin: 4px 6px;
                 }
             """)
-            gpuMenu = menu.addMenu(f"GPU Threshold ({self.FAILSAFE_GPU_TEMP}°C)")
+            gpuMenu = menu.addMenu(f"GPU TRIP THRESHOLD [{self.FAILSAFE_GPU_TEMP}°C]")
             for gVal in [70, 75, 80, 85, 90]:
-                act = gpuMenu.addAction(f"{gVal} °C" + (" ✓" if gVal == self.FAILSAFE_GPU_TEMP else ""))
+                act = gpuMenu.addAction(f"{gVal} °C" + (" [ACTIVE]" if gVal == self.FAILSAFE_GPU_TEMP else ""))
                 act.triggered.connect(lambda _, v=gVal: self._setGpuLimit(v))
 
-            cpuMenu = menu.addMenu(f"CPU Threshold ({self.FAILSAFE_CPU_TEMP}°C)")
+            cpuMenu = menu.addMenu(f"CPU TRIP THRESHOLD [{self.FAILSAFE_CPU_TEMP}°C]")
             for cVal in [80, 85, 90, 95, 100]:
-                act = cpuMenu.addAction(f"{cVal} °C" + (" ✓" if cVal == self.FAILSAFE_CPU_TEMP else ""))
+                act = cpuMenu.addAction(f"{cVal} °C" + (" [ACTIVE]" if cVal == self.FAILSAFE_CPU_TEMP else ""))
                 act.triggered.connect(lambda _, v=cVal: self._setCpuLimit(v))
 
             menu.exec(self._failsafeBtn.mapToGlobal(point))
 
         self._failsafeBtn.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self._failsafeBtn.customContextMenuRequested.connect(showThresholdMenu)
-        glassBox.addWidget(self._failsafeBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        deckBox.addWidget(self._failsafeBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Main window layout: 2 rows only! Solid Content + Floating Liquid Glass Navigation
+        # Main window layout: 2 rows only! Cyberpunk HUD Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
         mainLayout.setContentsMargins(12, 10, 12, 10)
         mainLayout.setSpacing(10)
         mainLayout.addLayout(lTherm)
-        mainLayout.addWidget(glassContainer)
+        mainLayout.addWidget(cyberDeck)
+        mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
 
@@ -883,81 +889,7 @@ def runApp(startMinimized=False) -> int:
         )
 
     mainWindow = TCC_GUI(awcc)
-
-    # Apple Liquid Glass stylesheet
-    mainWindow.setStyleSheet(f"""
-        QWidget#QMainWindow {{
-            background-color: #0b0d13;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
-        }}
-
-        /* Solid high-contrast telemetry cards (Rule: never glass on content) */
-        QWidget#ThermalCard {{
-            background-color: #13161f;
-            border: 1px solid #1f2535;
-            border-top: 1px solid rgba(255, 255, 255, 0.10);
-            border-radius: 14px;
-        }}
-
-        /* Floating Unified Liquid Glass Control Bar (Rule: group in GlassEffectContainer) */
-        QFrame#GlassEffectContainer {{
-            background: rgba(22, 26, 36, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            border-top: 1px solid rgba(255, 255, 255, 0.22);
-            border-radius: 18px;
-        }}
-
-        QPushButton#GlassFailSafeButton {{
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            border-radius: 14px;
-        }}
-        QPushButton#GlassFailSafeButton:hover {{
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.20);
-        }}
-        QPushButton#GlassFailSafeButton:pressed {{
-            background: rgba(255, 255, 255, 0.14);
-        }}
-
-        QSlider::groove:horizontal {{
-            height: 4px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 2px;
-        }}
-        QSlider::sub-page:horizontal {{
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {Colors.BLUE.value}, stop:1 {Colors.CYAN.value});
-            border-radius: 2px;
-        }}
-        QSlider::sub-page:horizontal:disabled {{
-            background: rgba(255, 255, 255, 0.04);
-        }}
-        QSlider::handle:horizontal {{
-            background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.25);
-            width: 14px;
-            margin-top: -5px;
-            margin-bottom: -5px;
-            border-radius: 7px;
-        }}
-        QSlider::handle:horizontal:hover {{
-            background: #f5f5f7;
-            border-color: {Colors.BLUE.value};
-        }}
-        QSlider::handle:horizontal:disabled {{
-            background: #3a4050;
-            border-color: transparent;
-        }}
-
-        QToolTip {{
-            background: rgba(18, 20, 26, 0.96);
-            color: {Colors.WHITE.value};
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 6px;
-            padding: 5px 8px;
-            font-size: 11px;
-        }}
-    """)
+    mainWindow.setStyleSheet(APP_STYLESHEET)
 
     # Apply Windows 11 DWM dark titlebar and Acrylic glass
     applyWindowsGlassAndDarkTheme(int(mainWindow.winId()))

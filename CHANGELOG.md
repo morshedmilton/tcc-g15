@@ -17,10 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GitHub Actions CI Workflow:** Automated linting, testing, and artifact build pipeline.
 
 ### Changed
-- **Apple Liquid Glass UI/UX Overhaul:** Re-engineered the interface inspired by Linear and Apple Notes. Integrated Windows 11 DWM dark title bar and Acrylic frosted glass backdrop (`#0e1015`, specular top highlights), macOS/Linear segmented pill selector for thermal modes, glowing jewel LED indicator for fail-safe status, and sleek rounded 8px glass pill gauges.
-- **Ultra-Compact UI Restoration:** Restored the sleek, compact two-row window layout from original upstream, eliminating extra rows and oversized blank margins while accommodating all 5 modes and fail-safe controls on a single row.
-- **Removed Redundant Secondary Labels:** Cut taglines, helper text, and secondary labels (e.g. removed redundant "Fan Speed" text; fan slider spans full width seamlessly).
-- **Zero UI Wakeup Optimization:** Removed continuous 30ms animation timer to ensure minimal CPU load (<0.20% CPU idle) and reduced wakeups (from 21.5/s down to ~10/s).
+- **Cyberpunk HUD & DWM Acrylic Translucency Overhaul:** Complete visual transformation into a futuristic gaming rig thermal HUD. Incorporates custom `CyberGauge` widgets featuring 25° skewed bar geometry, diagonal technical hatch dividers, and dynamic gradient shifting (Toxic Green `#00FF66` -> Cyber Yellow `#FCEE0A` -> Hazard Crimson `#FF003C`).
+- **True Desktop Acrylic Glass Effect:** Enabled `Qt.WA_TranslucentBackground` paired with Windows 11 DWM Acrylic (`DWMWA_SYSTEMBACKDROP_TYPE = 3`) and semi-transparent cyber-dark slate backdrops (`rgba(10, 12, 18, 0.82)`), delivering true desktop blur and frosted glass bleed-through without opaque occlusion.
+- **Cyberpunk Tactical Control Deck:** Redesigned thermal profile buttons with angled cyber borders, high-contrast neon accents, active overdrive states (`G-MODE // OVRD` in neon crimson), and tactical `▲ SAFEGUARD` beacon.
+- **Ultra-Compact UI Layout:** Restored the sleek, compact two-row window layout from original upstream, eliminating extra rows and oversized blank margins while accommodating all 5 modes and fail-safe controls on a single row.
+- **Zero UI Wakeup Optimization:** Pure vector `QPainter` rendering with zero continuous animation timers, preserving ultra-low CPU consumption (<0.20% CPU idle) and minimal thread wakeups.
 - **Fail-Safe Robustness:** Reinforced fail-safe logic with an 8-second debounce to ignore transient spikes, plus an un-bypassable hard safety threshold at 100°C CPU / 90°C GPU.
 
 ---

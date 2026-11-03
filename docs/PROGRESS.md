@@ -85,7 +85,7 @@ Measured on the installed upstream 1.6.4 build (elevated, 1 Hz CSV): `docs/BASEL
 | Dynamic Mode ID resolution & cache | ✅ shipped | Probe USTT then legacy, cached in `AWCCWmiWrapper` |
 | Smart Power Automation (AC ↔ Battery) | ✅ shipped | Detects `GetSystemPowerStatus`, auto-switches to Quiet on battery |
 | Ultra-Compact UI Restoration | ✅ shipped | Restored sleek 2-row layout with single bottom control row |
-| Apple Liquid Glass UI/UX Overhaul | ✅ shipped | macOS/Linear segmented pill selector, `#ThermalCard` frosted glass, jewel fail-safe LED, DWM Acrylic |
+| Cyberpunk HUD & DWM Acrylic Translucency | ✅ shipped | Skewed 25° hatch tachometer gauges (`CyberGauge`), true DWM Acrylic frosted glass (`WA_TranslucentBackground`), tactical neon mode deck |
 | Zero-Wakeup Optimization | ✅ shipped | Removed 30ms animation timer; instant gauge updates with zero wakeups |
 | Hard Fail-safe & Debounced Trigger | ✅ shipped | 8s debounce for spikes, hard un-bypassable emergency fail-safe (CPU 100°C / GPU 90°C) |
 | Detached Hardware Watchdog | ✅ shipped | Launched via WMI; restores Balanced mode on crash/kill |

@@ -12,16 +12,16 @@ class QRadioButtonSet(QtWidgets.QWidget):
         if len(options) == 0:
             raise RuntimeError('"options" list length can not be 0')
 
-        self.setObjectName('GlassSegmentedControl')
+        self.setObjectName('CyberModeSelector')
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
 
         hLayout = QtWidgets.QHBoxLayout(self)
-        hLayout.setContentsMargins(4, 4, 4, 4)
-        hLayout.setSpacing(4)
+        hLayout.setContentsMargins(0, 0, 0, 0)
+        hLayout.setSpacing(6)
 
         if title:
             lbl = QtWidgets.QLabel(title)
-            lbl.setStyleSheet("color: #8b92a0; font-size: 11px; font-weight: 500; margin-right: 4px;")
+            lbl.setStyleSheet("color: #7D8799; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold; margin-right: 4px;")
             hLayout.addWidget(lbl)
 
         self._buttonGroup = QtWidgets.QButtonGroup(self)
@@ -30,45 +30,58 @@ class QRadioButtonSet(QtWidgets.QWidget):
         self._userCallback = None
         self._buttons = {}
         for label, value in options:
-            btn = QtWidgets.QPushButton(label)
+            btnText = label.upper().replace('_', ' ')
+            if "G MODE" in btnText or "G_MODE" in btnText:
+                btnText = "G-MODE // OVRD"
+            btn = QtWidgets.QPushButton(btnText)
             btn._value = value
             btn.setCheckable(True)
-            btn.setFixedHeight(28)
+            btn.setFixedHeight(30)
             btn.setCursor(QtCore.Qt.PointingHandCursor)
+            if "G_MODE" in value or "G-MODE" in btnText:
+                btn.setProperty("isGMode", True)
             self._buttonGroup.addButton(btn)
             hLayout.addWidget(btn)
             self._buttons[value] = btn
             btn.toggled.connect(self._onClicked)
 
-        # Style as true Apple Liquid Glass segmented control
+        # High-tech Cyberpunk Mode Selector Stylesheet
         self.setStyleSheet("""
-            QWidget#GlassSegmentedControl {
-                background: rgba(0, 0, 0, 0.25);
-                border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 14px;
+            QWidget#CyberModeSelector {
+                background: transparent;
             }
             QPushButton {
-                color: #8e95a5;
-                font-size: 12px;
-                font-weight: 500;
+                background: rgba(20, 26, 38, 0.70);
+                color: #8A96AA;
+                font-family: 'Orbitron', 'Cascadia Code', monospace;
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 0.6px;
                 padding: 4px 12px;
-                border-radius: 10px;
-                border: 1px solid transparent;
-                background: transparent;
+                border: 1px solid rgba(0, 240, 255, 0.20);
+                border-radius: 2px;
             }
             QPushButton:hover {
-                color: #f5f5f7;
-                background: rgba(255, 255, 255, 0.06);
+                background: rgba(0, 240, 255, 0.18);
+                color: #00F0FF;
+                border: 1px solid #00F0FF;
             }
             QPushButton:checked {
-                color: #ffffff;
-                font-weight: 600;
-                background: rgba(255, 255, 255, 0.16);
-                border: 1px solid rgba(255, 255, 255, 0.24);
+                background: #FCEE0A;
+                color: #05070A;
+                font-weight: 900;
+                border: 1px solid #FFFFFF;
+                border-radius: 2px;
+            }
+            QPushButton[isGMode="true"]:checked {
+                background: #FF003C;
+                color: #FFFFFF;
+                border: 1px solid #FFAAB8;
             }
             QPushButton:disabled {
-                color: #4a5060;
-                background: transparent;
+                color: #4A5262;
+                background: rgba(15, 18, 25, 0.40);
+                border-color: rgba(255, 255, 255, 0.05);
             }
         """)
 

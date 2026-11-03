@@ -1,27 +1,27 @@
 from typing import Callable, Optional, Tuple
 from PySide6 import QtCore, QtWidgets, QtGui
-from GUI.QGauge import QGauge
-from GUI.AppColors import Colors
+from GUI.CyberGauge import CyberGauge
 
-class ThermalUnitWidget(QtWidgets.QWidget):
+class ThermalUnitWidget(QtWidgets.QFrame):
     def __init__(self, parent: Optional[QtWidgets.QWidget], tempMinMax: Tuple[int,int], tempColorLimits: Optional[Tuple[int,int]], fanMinMax: Tuple[int,int], sliderMaxAndTick: Tuple[int,int]):
         super().__init__(parent)
-        self.setObjectName("ThermalCard")
+        self.setObjectName("CyberCard")
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
 
-        # Header: Hardware Title + Category Tag Pill
+        # Header: Hardware Title + Status Tag
         self._title = QtWidgets.QLabel(self)
-        self._title.setStyleSheet("color: #f5f5f7; font-size: 13px; font-weight: 600; letter-spacing: -0.2px;")
-        
+        self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;")
+
         self._tagPill = QtWidgets.QLabel(self)
         self._tagPill.setStyleSheet("""
-            background: rgba(10, 132, 255, 0.14);
-            color: #5ac8fa;
+            color: #00F0FF;
+            font-family: 'Orbitron', 'Cascadia Code', monospace;
             font-size: 10px;
-            font-weight: 700;
+            font-weight: bold;
+            background: rgba(0, 240, 255, 0.12);
             padding: 2px 7px;
-            border-radius: 8px;
-            border: 1px solid rgba(90, 200, 250, 0.20);
+            border: 1px solid rgba(0, 240, 255, 0.35);
+            border-radius: 2px;
         """)
 
         headerLayout = QtWidgets.QHBoxLayout()
@@ -30,13 +30,16 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         headerLayout.addStretch(1)
         headerLayout.addWidget(self._tagPill, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Temp Row: [TEMP] [======Bar======] [ 52 °C ]
-        lblTemp = QtWidgets.QLabel("TEMP")
-        lblTemp.setFixedWidth(42)
-        lblTemp.setStyleSheet("color: #6b7280; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;")
+        # Temp Row: [:: TEMP] [===CyberGauge===] [ 62 °C ]
+        lblTemp = QtWidgets.QLabel(":: TEMP")
+        lblTemp.setFixedWidth(55)
+        lblTemp.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
 
-        self._tempBar, self._tempBarLabel = self._makeGaugeWithLabel(tempMinMax, ' °C', tempColorLimits)
-        self._tempBarLabel.setFixedWidth(56)
+        self._tempBar = CyberGauge(self, min_val=tempMinMax[0], max_val=tempMinMax[1], unit=' °C')
+        if tempColorLimits:
+            self._tempBar.setColorLimits(tempColorLimits)
+        self._tempBarLabel = self._tempBar.createLabel()
+        self._tempBarLabel.setFixedWidth(64)
 
         tempLayout = QtWidgets.QHBoxLayout()
         tempLayout.setSpacing(8)
@@ -44,13 +47,14 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         tempLayout.addWidget(self._tempBar, 1, alignment=QtCore.Qt.AlignVCenter)
         tempLayout.addWidget(self._tempBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Fan Row: [FAN] [======Bar======] [ 2400 RPM ]
-        lblFan = QtWidgets.QLabel("FAN")
-        lblFan.setFixedWidth(42)
-        lblFan.setStyleSheet("color: #6b7280; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;")
+        # Fan Row: [:: TACH] [===CyberGauge===] [ 2700 RPM ]
+        lblFan = QtWidgets.QLabel(":: TACH")
+        lblFan.setFixedWidth(55)
+        lblFan.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
 
-        self._fanBar, self._fanBarLabel = self._makeGaugeWithLabel(fanMinMax, ' RPM')
-        self._fanBarLabel.setFixedWidth(72)
+        self._fanBar = CyberGauge(self, min_val=fanMinMax[0], max_val=fanMinMax[1], unit=' RPM')
+        self._fanBarLabel = self._fanBar.createLabel()
+        self._fanBarLabel.setFixedWidth(82)
 
         fanLayout = QtWidgets.QHBoxLayout()
         fanLayout.setSpacing(8)
@@ -58,10 +62,10 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         fanLayout.addWidget(self._fanBar, 1, alignment=QtCore.Qt.AlignVCenter)
         fanLayout.addWidget(self._fanBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Custom Fan Speed Offset Slider Row
-        lblOffset = QtWidgets.QLabel("OFFSET")
-        lblOffset.setFixedWidth(42)
-        lblOffset.setStyleSheet("color: #6b7280; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;")
+        # Custom Fan Speed Offset Slider Row: [:: OFFS] [===Slider===] [ +0% ]
+        self._lblOffset = QtWidgets.QLabel(":: OFFS")
+        self._lblOffset.setFixedWidth(55)
+        self._lblOffset.setStyleSheet("color: #7D8799; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
 
         self._speedSliderCallback = None
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
@@ -79,66 +83,58 @@ class ThermalUnitWidget(QtWidgets.QWidget):
         self._speedSlider.valueChanged.connect(self._onSliderMoved)
 
         self._sliderValLabel = QtWidgets.QLabel("+0%")
-        self._sliderValLabel.setFixedWidth(40)
-        self._sliderValLabel.setStyleSheet("color: #8e95a5; font-size: 11px; font-weight: 600;")
+        self._sliderValLabel.setFixedWidth(52)
+        self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
         self._sliderValLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         sliderLayout = QtWidgets.QHBoxLayout()
         sliderLayout.setSpacing(8)
-        sliderLayout.addWidget(lblOffset, alignment=QtCore.Qt.AlignVCenter)
+        sliderLayout.addWidget(self._lblOffset, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._speedSlider, 1, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._sliderValLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Main Card Layout
         cardLayout = QtWidgets.QVBoxLayout(self)
         cardLayout.setContentsMargins(14, 12, 14, 12)
-        cardLayout.setSpacing(7)
+        cardLayout.setSpacing(8)
         cardLayout.addLayout(headerLayout)
         cardLayout.addLayout(tempLayout)
         cardLayout.addLayout(fanLayout)
         cardLayout.addLayout(sliderLayout)
-
-    def _makeGaugeWithLabel(self, minMax: Tuple[int,int], units: str, colorLimits: Optional[Tuple[int,int]] = None) -> Tuple[QGauge, QtWidgets.QLabel]:
-        g = QGauge()
-        g.setMinimum(minMax[0])
-        g.setMaximum(minMax[1])
-        if colorLimits:
-            g.setColorScheme({colorLimits[0]: Colors.GREEN.value, colorLimits[1]: Colors.YELLOW.value, minMax[1]: Colors.RED.value})
-        g.setFormat(f'%v{units}')
-        return (g, g.createLabel())
 
     def _onSliderMoved(self, val: int):
         self._sliderValLabel.setText(f"+{val}%")
         self._speedSliderDebounce.start()
 
     def setTitle(self, title: str) -> None:
-        self._title.setText(title)
-        # Update category pill automatically
+        self._title.setText(f"// {title.upper()}")
         upper = title.upper()
         if "GPU" in upper or "RTX" in upper or "GEFORCE" in upper or "GRAPHICS" in upper:
-            self._tagPill.setText("GPU")
+            self._tagPill.setText("[ GPU // ACTIVE ]")
             self._tagPill.setStyleSheet("""
-                background: rgba(10, 132, 255, 0.14);
-                color: #5ac8fa;
+                color: #00F0FF;
+                font-family: 'Orbitron', 'Cascadia Code', monospace;
                 font-size: 10px;
-                font-weight: 700;
+                font-weight: bold;
+                background: rgba(0, 240, 255, 0.12);
                 padding: 2px 7px;
-                border-radius: 8px;
-                border: 1px solid rgba(90, 200, 250, 0.20);
+                border: 1px solid rgba(0, 240, 255, 0.35);
+                border-radius: 2px;
             """)
         elif "CPU" in upper or "CORE" in upper or "INTEL" in upper or "RYZEN" in upper:
-            self._tagPill.setText("CPU")
+            self._tagPill.setText("[ CPU // ACTIVE ]")
             self._tagPill.setStyleSheet("""
-                background: rgba(48, 209, 88, 0.14);
-                color: #30d158;
+                color: #00FF66;
+                font-family: 'Orbitron', 'Cascadia Code', monospace;
                 font-size: 10px;
-                font-weight: 700;
+                font-weight: bold;
+                background: rgba(0, 255, 102, 0.12);
                 padding: 2px 7px;
-                border-radius: 8px;
-                border: 1px solid rgba(48, 209, 88, 0.20);
+                border: 1px solid rgba(0, 255, 102, 0.35);
+                border-radius: 2px;
             """)
         else:
-            self._tagPill.setText("UNIT")
+            self._tagPill.setText("[ UNIT // READY ]")
 
     def setTemp(self, temp: int) -> None:
         self._tempBar.setValue(temp)
@@ -157,10 +153,12 @@ class ThermalUnitWidget(QtWidgets.QWidget):
 
     def setSpeedDisabled(self, disabled: bool) -> None:
         self._speedSlider.setDisabled(disabled)
-        self._sliderValLabel.setStyleSheet(
-            "color: #4a5060; font-size: 11px; font-weight: 600;" if disabled
-            else "color: #5ac8fa; font-size: 11px; font-weight: 600;"
-        )
+        if disabled:
+            self._lblOffset.setStyleSheet("color: #4A5262; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
+            self._sliderValLabel.setStyleSheet("color: #4A5262; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
+        else:
+            self._lblOffset.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
+            self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
 
     def getSpeedSlider(self) -> int:
         return self._speedSlider.value()
