@@ -61,28 +61,30 @@ def test_watchdog_resurrection(qapp):
         with patch('GUI.AppGUI.DetectHardware') as mock_dh:
             mock_dh.return_value.getHardwareName.return_value = 'Test Device'
             window = TCC_GUI(awcc)
+            try:
+                # Mock an active watchdog process
+                mock_proc = MagicMock()
+                mock_proc.poll.return_value = None  # None means process is still running
+                window._watchdog = mock_proc
+                assert window._isWatchdogAlive() is True
 
-            # Mock an active watchdog process
-            mock_proc = MagicMock()
-            mock_proc.poll.return_value = None  # None means process is still running
-            window._watchdog = mock_proc
-            assert window._isWatchdogAlive() is True
+                # Mock watchdog process termination (e.g. exit code 0)
+                mock_proc.poll.return_value = 0
+                assert window._isWatchdogAlive() is False
 
-            # Mock watchdog process termination (e.g. exit code 0)
-            mock_proc.poll.return_value = 0
-            assert window._isWatchdogAlive() is False
+                # Verify ensureWatchdogRunning resurrects the watchdog
+                start_mock = MagicMock()
+                window._startWatchdog = start_mock
+                window._ensureWatchdogRunning()
+                start_mock.assert_called_once()
 
-            # Verify ensureWatchdogRunning resurrects the watchdog
-            start_mock = MagicMock()
-            window._startWatchdog = start_mock
-            window._ensureWatchdogRunning()
-            start_mock.assert_called_once()
-
-            # Verify that if app is shutting down, watchdog is NOT resurrected
-            start_mock.reset_mock()
-            window._watchdogShuttingDown = True
-            window._ensureWatchdogRunning()
-            start_mock.assert_not_called()
+                # Verify that if app is shutting down, watchdog is NOT resurrected
+                start_mock.reset_mock()
+                window._watchdogShuttingDown = True
+                window._ensureWatchdogRunning()
+                start_mock.assert_not_called()
+            finally:
+                window._destroy()
     finally:
         HotKey.start = orig_hotkey
         TCC_GUI._startWatchdog = orig_watchdog

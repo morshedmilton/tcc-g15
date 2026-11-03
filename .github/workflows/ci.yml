@@ -29,7 +29,7 @@ jobs:
 
     - name: Run unit test suite (mocked WMI layer)
       run: |
-        pytest tests/ -v
+        python -m pytest tests/ -v
 
     - name: Run regression verification
       run: |
