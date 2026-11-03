@@ -61,18 +61,19 @@ class HardwareIcon(QtWidgets.QWidget):
 
 
 class ThermalUnitWidget(QtWidgets.QFrame):
-    def __init__(self, parent: Optional[QtWidgets.QWidget], tempMinMax: Tuple[int,int], tempColorLimits: Optional[Tuple[int,int]], fanMinMax: Tuple[int,int], sliderMaxAndTick: Tuple[int,int]):
+    def __init__(self, parent: Optional[QtWidgets.QWidget], tempMinMax: Tuple[int,int], tempColorLimits: Optional[Tuple[int,int]], fanMinMax: Tuple[int,int], sliderMaxAndTick: Tuple[int,int], hardwareType: Optional[str] = None):
         super().__init__(parent)
         self.setObjectName("CyberCard")
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
+        self._hardwareType: Optional[str] = hardwareType.upper() if hardwareType else None
 
         # Header: Hardware Vector Icon + Title + Status Tag
-        self._icon = HardwareIcon("CPU", self)
+        self._icon = HardwareIcon(self._hardwareType or "CPU", self)
 
         self._title = QtWidgets.QLabel(self)
         self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.3px;")
 
-        self._tagPill = QtWidgets.QLabel(self)
+        self._tagPill = QtWidgets.QLabel("LIVE", self)
         self._tagPill.setStyleSheet("""
             color: #00F0FF;
             font-family: 'Orbitron', 'Cascadia Code', monospace;
@@ -172,12 +173,30 @@ class ThermalUnitWidget(QtWidgets.QFrame):
         self._sliderValLabel.setText(f"+{val}%")
         self._speedSliderDebounce.start()
 
-    def setTitle(self, title: str) -> None:
-        clean_title = title.replace("//", "").strip()
+    def setTitle(self, title: Optional[str]) -> None:
+        clean_title = (title or "").replace("//", "").strip()
         upper = clean_title.upper()
-        if "GPU" in upper or "RTX" in upper or "GEFORCE" in upper or "GRAPHICS" in upper:
+        is_gpu = (
+            self._hardwareType == "GPU"
+            or "GPU" in upper
+            or "RTX" in upper
+            or "GTX" in upper
+            or "GEFORCE" in upper
+            or "GRAPHICS" in upper
+            or "RADEON" in upper
+            or "ARC" in upper
+        )
+        is_cpu = (
+            self._hardwareType == "CPU"
+            or "CPU" in upper
+            or "CORE" in upper
+            or "INTEL" in upper
+            or "RYZEN" in upper
+        )
+        if is_gpu and self._hardwareType != "CPU":
+            self._hardwareType = "GPU"
             self._icon.setType("GPU")
-            self._tagPill.setText("[ GPU ACTIVE ]")
+            self._tagPill.setText("LIVE")
             self._tagPill.setStyleSheet("""
                 color: #00F0FF;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
@@ -196,11 +215,20 @@ class ThermalUnitWidget(QtWidgets.QFrame):
                 idx = upper.find("GTX")
                 parts = clean_title[idx:].split()
                 display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+            elif "RX" in upper:
+                idx = upper.find("RX")
+                parts = clean_title[idx:].split()
+                display_title = (" ".join(parts[:2]) if len(parts) >= 2 else "GPU").upper()
+            elif "RADEON" in upper:
+                display_title = "RADEON"
+            elif "ARC" in upper:
+                display_title = "ARC GPU"
             else:
                 display_title = "GPU"
-        elif "CPU" in upper or "CORE" in upper or "INTEL" in upper or "RYZEN" in upper:
+        elif is_cpu:
+            self._hardwareType = "CPU"
             self._icon.setType("CPU")
-            self._tagPill.setText("[ CPU ACTIVE ]")
+            self._tagPill.setText("LIVE")
             self._tagPill.setStyleSheet("""
                 color: #00FF66;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
@@ -212,18 +240,30 @@ class ThermalUnitWidget(QtWidgets.QFrame):
                 border-radius: 2px;
             """)
             import re
-            m = re.search(r'(i[3579]-\w+|Ryzen\s*\d+\s*\w*)', clean_title, re.IGNORECASE)
+            m = re.search(r'(i[3579]-\w+|Ultra\s*\d+\s*\w*|Ryzen\s*\d+\s*\w*)', clean_title, re.IGNORECASE)
             if m:
                 display_title = m.group(1).upper()
             else:
                 display_title = "CPU"
         else:
             self._icon.setType("CPU")
-            self._tagPill.setText("[ UNIT READY ]")
+            self._tagPill.setText("READY")
+            self._tagPill.setStyleSheet("""
+                color: #7D8799;
+                font-family: 'Orbitron', 'Cascadia Code', monospace;
+                font-size: 9px;
+                font-weight: bold;
+                background: rgba(255, 255, 255, 0.08);
+                padding: 1px 4px;
+                border: 1px solid rgba(255, 255, 255, 0.20);
+                border-radius: 2px;
+            """)
             display_title = clean_title[:8].upper() if clean_title else "UNIT"
 
+        if len(display_title) > 11:
+            display_title = display_title[:11]
         self._title.setText(display_title)
-        if clean_title not in ("CPU", "GPU"):
+        if clean_title and clean_title not in ("CPU", "GPU"):
             self._title.setToolTip(clean_title)
 
     def setTemp(self, temp: int) -> None:

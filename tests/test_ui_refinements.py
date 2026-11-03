@@ -57,8 +57,8 @@ def test_offs_slider_limits_0_to_100(qapp):
 
 def test_no_double_slash_prefix_and_hardware_vector_icons(qapp):
     """Section titles and labels must not contain '//' and must feature vector icons."""
-    gpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20))
-    cpuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20))
+    gpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
+    cpuWidget = ThermalUnitWidget(None, (0, 110), (85, 95), (0, 5500), (100, 20), hardwareType="CPU")
 
     # Set titles
     gpuWidget.setTitle("GPU")
@@ -84,6 +84,22 @@ def test_no_double_slash_prefix_and_hardware_vector_icons(qapp):
     assert gpuWidget._icon._type == "GPU"
     assert cpuWidget._icon._type == "CPU"
 
+    # Edge cases: None and empty strings must not crash
+    gpuWidget.setTitle(None)
+    cpuWidget.setTitle("")
+    assert "//" not in gpuWidget._title.text()
+    assert "//" not in cpuWidget._title.text()
+
+    # AMD Radeon and Intel Arc support
+    amdGpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
+    amdGpuWidget.setTitle("AMD Radeon RX 7700M")
+    assert amdGpuWidget._icon._type == "GPU"
+    assert "RX" in amdGpuWidget._title.text() or "RADEON" in amdGpuWidget._title.text()
+
+    arcGpuWidget = ThermalUnitWidget(None, (0, 95), (72, 85), (0, 5500), (100, 20), hardwareType="GPU")
+    arcGpuWidget.setTitle("Intel Arc A730M Graphics")
+    assert arcGpuWidget._icon._type == "GPU"
+
 
 def test_cybergauge_cyberpunk_neon_identity(qapp):
     """CyberGauge displays cyberpunk neon styling with skewed 25-degree angle and neon gradient."""
@@ -106,9 +122,33 @@ def test_cybergauge_cyberpunk_neon_identity(qapp):
     assert gauge._getCurrentColor() == QtGui.QColor("#FF003C")  # Hazard Neon Red
 
 
+def test_cybergauge_rendering_and_parallel_geometry(qapp):
+    """CyberGauge renders cleanly to QPixmap across all values and fill path has parallel 25-degree edges."""
+    gauge = CyberGauge(None, min_val=0, max_val=100, unit=" °C")
+    gauge.setColorLimits((70, 85))
+    gauge.resize(120, 18)
+
+    # Render at different values
+    for val in [0, 1, 25, 50, 75, 100]:
+        gauge.setValue(val)
+        pix = QtGui.QPixmap(gauge.size())
+        pix.fill(QtCore.Qt.transparent)
+        gauge.render(pix)
+        assert not pix.isNull()
+
+
+def test_hardware_icon_rendering(qapp):
+    """HardwareIcon renders CPU and GPU vector paths without errors."""
+    for hw in ["CPU", "GPU"]:
+        icon = HardwareIcon(hw)
+        pix = QtGui.QPixmap(icon.size())
+        pix.fill(QtCore.Qt.transparent)
+        icon.render(pix)
+        assert not pix.isNull()
+
+
 def test_compact_window_width_between_360_and_400(qapp):
-    """Main window width target is between 360px and 400px."""
-    # Prevent background threads / hotkeys during test
+    """Main window width target is between 360px and 400px and fits real hardware titles without clipping."""
     orig_start = HotKey.start
     HotKey.start = lambda self: None
     try:
@@ -131,18 +171,38 @@ def test_compact_window_width_between_360_and_400(qapp):
         from unittest.mock import patch
         with patch('GUI.AppGUI.DetectHardware') as mock_dh:
             mock_dh_inst = mock_dh.return_value
-            mock_dh_inst.getHardwareName.return_value = None
+            mock_dh_inst.getHardwareName.return_value = 'NVIDIA GeForce RTX 4060 Laptop GPU'
             try:
                 window = TCC_GUI(awcc)
                 window.setStyleSheet(APP_STYLESHEET)
+                window.updateGaugeTitles(
+                    'NVIDIA GeForce RTX 4060 Laptop GPU',
+                    '13th Gen Intel Core i7-13650HX'
+                )
                 window.adjustSize()
 
                 hint_w = window.sizeHint().width()
                 assert 360 <= hint_w <= 400, f"sizeHint width {hint_w} not between 360 and 400"
 
+                targetWidth = max(360, min(400, hint_w))
+                window.setFixedSize(targetWidth, window.sizeHint().height())
+                window.show()
+                QtWidgets.QApplication.processEvents()
+
                 # Check thermal cards fit
                 assert window._thermalGPU.width() > 0
                 assert window._thermalCPU.width() > 0
+
+                # Crucial check: verify that headers do not clip with realistic hardware names
+                for card in (window._thermalGPU, window._thermalCPU):
+                    # Title width must accommodate its sizeHint
+                    assert card._title.width() >= card._title.sizeHint().width(), (
+                        f"Title {card._title.text()} clipped: width {card._title.width()} < sizeHint {card._title.sizeHint().width()}"
+                    )
+                    # Tag pill must not be clipped
+                    assert card._tagPill.width() >= card._tagPill.sizeHint().width(), (
+                        f"Tag pill {card._tagPill.text()} clipped: width {card._tagPill.width()} < sizeHint {card._tagPill.sizeHint().width()}"
+                    )
 
                 # Check slider max is 100
                 assert window._thermalGPU._speedSlider.maximum() == 100

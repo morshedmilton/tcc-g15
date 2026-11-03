@@ -142,18 +142,18 @@ class CyberGauge(QtWidgets.QWidget):
             fill_path.moveTo(skew + 1.5, 3.0)
             fill_path.lineTo(skew + 1.5 + fill_w, 3.0)
             fill_path.lineTo(1.5 + fill_w, h - 3.0)
-            fill_path.lineTo(3.0, h - 3.0)
+            fill_path.lineTo(1.5, h - 3.0)
             fill_path.closeSubpath()
 
             # Sharp Cyberpunk Neon Gradient (#00FF66 -> #FCEE0A -> #FF003C)
             grad = QtGui.QLinearGradient(skew + 1.5, 0.0, skew + 1.5 + usable_w, 0.0)
             if self._color_limits:
                 p0 = max(0.0, min(1.0, (self._color_limits[0] - self._min) / span))
-                p1 = max(0.0, min(1.0, (self._color_limits[1] - self._min) / span))
+                p1 = max(p0, min(1.0, (self._color_limits[1] - self._min) / span))
                 grad.setColorAt(0.0, QtGui.QColor("#00FF66"))
                 grad.setColorAt(max(0.0, p0 - 0.04), QtGui.QColor("#00FF66"))
                 grad.setColorAt(p0, QtGui.QColor("#FCEE0A"))
-                grad.setColorAt(max(0.0, p1 - 0.04), QtGui.QColor("#FCEE0A"))
+                grad.setColorAt(max(p0, p1 - 0.04), QtGui.QColor("#FCEE0A"))
                 grad.setColorAt(p1, QtGui.QColor("#FF003C"))
                 grad.setColorAt(1.0, QtGui.QColor("#FF003C"))
             else:

@@ -347,9 +347,9 @@ class TCC_GUI(QtWidgets.QWidget):
         self.setStyleSheet(APP_STYLESHEET)
 
         # Thermal Unit Widgets
-        self._thermalGPU = ThermalUnitWidget(self, tempMinMax=(0, 95), tempColorLimits=self.GPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20))
+        self._thermalGPU = ThermalUnitWidget(self, tempMinMax=(0, 95), tempColorLimits=self.GPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20), hardwareType='GPU')
         self._thermalGPU.setTitle('GPU')
-        self._thermalCPU = ThermalUnitWidget(self, tempMinMax=(0, 110), tempColorLimits=self.CPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20))
+        self._thermalCPU = ThermalUnitWidget(self, tempMinMax=(0, 110), tempColorLimits=self.CPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(100, 20), hardwareType='CPU')
         self._thermalCPU.setTitle('CPU')
 
         self._thermalGPU.setSourceNote(
