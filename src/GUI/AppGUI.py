@@ -268,7 +268,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.0"
+    APP_VERSION = "1.8.1"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -694,6 +694,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
         self._loadAppSettings()
 
+        self._updateAppState = updateAppState
         self._updateGaugesTask = QPeriodic(self, self.TEMP_UPD_PERIOD_MS, updateAppState)
         updateAppState()
         self._updateGaugesTask.start()

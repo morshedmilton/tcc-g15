@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-11-04
+
+### Fixed
+- **CI Workflow Default Branch:** Fixed GitHub Actions CI trigger in `.github/workflows/ci.yml` to run on `main` and PRs targeting `main` (resolving issue where CI never triggered on default branch).
+- **Hardware Whitelist Expansion:** Added missing `Dell G16 7630` and `Alienware m15 R7` to `SUPPORTED_MODELS` whitelist, reconciling code with documentation claims.
+- **Safety Invariant INV-1 Test:** Added automated regression test in `tests/test_safety_and_failsafe.py` verifying that hard emergency trips to G-Mode occur even if soft fail-safe is disabled by user.
+- **Repository Cleanliness:** Untracked 34 runtime debug logs, PID files, and temporary artifacts from git index, with comprehensive `.gitignore` rules.
+- **Dependency Pinning:** Pinned exact runtime dependency versions in `requirements.txt` and separated development/testing tooling into `requirements-dev.txt`.
+
+---
+
 ## [1.8.0] - 2026-11-03
 
 ### Added

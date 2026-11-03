@@ -1,5 +1,0 @@
-﻿SystemRestore class: ok
-SystemRestoreConfig: ok
-Enable-ComputerRestore C: ok
-Checkpoint-Computer failed: This command cannot be run due to the following error: the service cannot be started because it is disabled or does not have enabled devices associated with it.
-restore points: 0

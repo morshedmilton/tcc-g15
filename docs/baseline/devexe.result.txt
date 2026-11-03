@@ -1,5 +1,0 @@
-﻿run at 2026-11-03T01:16:22.0920373+06:00
-process_alive: True
-qt_window: ok pid=22464 ram_mb=93 threads=15
-title: Thermal Control Center for Dell G15
-stopped: True

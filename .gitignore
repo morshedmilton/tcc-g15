@@ -1,6 +1,29 @@
-**/__pycache__
-**/.mypy_cache
-dist
-build
+# Python & Bytecode
+**/__pycache__/
+**/.mypy_cache/
+.pytest_cache/
+*.py[cod]
+
+# Virtual Environment
+.venv/
+venv/
+
+# PyInstaller & Build Outputs
+dist/
+build/
 *.spec
+
+# Agent scratch
 .agents/
+
+# Runtime, debug & transient logs
+docs/baseline/*.log
+docs/baseline/*.err
+docs/baseline/*.pid
+docs/baseline/*.result.txt
+docs/baseline/cleanup.txt
+docs/baseline/proc.list.txt
+docs/baseline/ui*.png
+docs/restorepoint.txt
+docs/restorestatus.txt
+*.heartbeat*
