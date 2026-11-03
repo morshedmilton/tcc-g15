@@ -152,6 +152,81 @@ def errorExit(message: str, message2: Optional[str] = None) -> None:
     alert("Oh-oh", message, QtWidgets.QMessageBox.Icon.Critical, message2=message2)
     sys.exit(1)
 
+APP_STYLESHEET = f"""
+    QWidget#QMainWindow {{
+        background-color: #0b0d13;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    }}
+
+    /* Solid high-contrast telemetry cards (Rule: never glass on content) */
+    QWidget#ThermalCard {{
+        background-color: #141722;
+        border: 1px solid #222738;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+    }}
+
+    /* Floating Unified Liquid Glass Control Bar (Rule: group in GlassEffectContainer) */
+    QFrame#GlassEffectContainer {{
+        background: rgba(24, 28, 40, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 18px;
+    }}
+
+    QPushButton#GlassFailSafeButton {{
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 14px;
+    }}
+    QPushButton#GlassFailSafeButton:hover {{
+        background: rgba(255, 255, 255, 0.09);
+        border-color: rgba(255, 255, 255, 0.22);
+    }}
+    QPushButton#GlassFailSafeButton:pressed {{
+        background: rgba(255, 255, 255, 0.16);
+    }}
+
+    /* Apple Liquid Slider */
+    QSlider::groove:horizontal {{
+        height: 4px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 2px;
+    }}
+    QSlider::sub-page:horizontal {{
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {Colors.BLUE.value}, stop:1 {Colors.CYAN.value});
+        border-radius: 2px;
+    }}
+    QSlider::sub-page:horizontal:disabled {{
+        background: rgba(255, 255, 255, 0.04);
+    }}
+    QSlider::handle:horizontal {{
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+        width: 14px;
+        margin-top: -5px;
+        margin-bottom: -5px;
+        border-radius: 7px;
+    }}
+    QSlider::handle:horizontal:hover {{
+        background: #f5f5f7;
+        border-color: {Colors.BLUE.value};
+    }}
+    QSlider::handle:horizontal:disabled {{
+        background: #3a4050;
+        border-color: transparent;
+    }}
+
+    QToolTip {{
+        background: rgba(18, 20, 26, 0.96);
+        color: {Colors.WHITE.value};
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 11px;
+    }}
+"""
+
 class TCC_GUI(QtWidgets.QWidget):
     TEMP_UPD_PERIOD_MS = 2000
     TEMP_UPD_PERIOD_MS_HIDDEN = 5000
@@ -255,6 +330,7 @@ class TCC_GUI(QtWidgets.QWidget):
 
         self.setObjectName('QMainWindow')
         self.setWindowTitle(self.APP_NAME)
+        self.setStyleSheet(APP_STYLESHEET)
 
         # Thermal Unit Widgets
         self._thermalGPU = ThermalUnitWidget(self, tempMinMax=(0, 95), tempColorLimits=self.GPU_COLOR_LIMITS, fanMinMax=(0, 5500), sliderMaxAndTick=(120, 20))
@@ -296,95 +372,132 @@ class TCC_GUI(QtWidgets.QWidget):
         lTherm.addWidget(self._thermalGPU)
         lTherm.addWidget(self._thermalCPU)
 
-        # Bottom row: Left = Segmented Glass Pill Mode Switch, Right = Glass FailSafe Cluster
-        self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
+        # Single Unified Floating Glass Container (iOS 26 Liquid Glass Pattern)
+        glassContainer = QtWidgets.QFrame()
+        glassContainer.setObjectName("GlassEffectContainer")
+        glassBox = QtWidgets.QHBoxLayout(glassContainer)
+        glassBox.setContentsMargins(6, 4, 8, 4)
+        glassBox.setSpacing(10)
 
-        # Fail-safe Jewel LED dot
-        failsafeIndicator = QtWidgets.QLabel()
+        # 1. Mode Switch (Glass Segmented Control)
+        self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
+        glassBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+
+        glassBox.addStretch(1)
+
+        # 2. Subtle Vertical Glass Divider
+        glassDivider = QtWidgets.QFrame()
+        glassDivider.setFrameShape(QtWidgets.QFrame.VLine)
+        glassDivider.setStyleSheet("background: rgba(255, 255, 255, 0.12); width: 1px; max-width: 1px; margin: 4px 0px;")
+        glassBox.addWidget(glassDivider)
+
+        # 3. Interactive FailSafe Glass Action Pill
+        self._failsafeBtn = QtWidgets.QPushButton()
+        self._failsafeBtn.setObjectName("GlassFailSafeButton")
+        self._failsafeBtn.setCursor(QtCore.Qt.PointingHandCursor)
+        self._failsafeBtn.setFixedHeight(30)
+        self._failsafeBtn.setMinimumWidth(168)
+
+        failsafeInner = QtWidgets.QHBoxLayout(self._failsafeBtn)
+        failsafeInner.setContentsMargins(10, 2, 10, 2)
+        failsafeInner.setSpacing(6)
+
+        failsafeIndicator = QtWidgets.QLabel("●")
+        failsafeIndicator.setStyleSheet("color: #30d158; font-size: 10px; font-weight: 900;")
+        failsafeLabel = QtWidgets.QLabel("Fail-Safe")
+        failsafeLabel.setStyleSheet("color: #f5f5f7; font-size: 11px; font-weight: 600;")
+        self._failsafeThresholdBadge = QtWidgets.QLabel(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
+        self._failsafeThresholdBadge.setStyleSheet("""
+            background: rgba(255, 255, 255, 0.08);
+            color: #8e95a5;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        """)
+
+        failsafeInner.addWidget(failsafeIndicator, alignment=QtCore.Qt.AlignVCenter)
+        failsafeInner.addWidget(failsafeLabel, alignment=QtCore.Qt.AlignVCenter)
+        failsafeInner.addWidget(self._failsafeThresholdBadge, alignment=QtCore.Qt.AlignVCenter)
+
         def updFailsafeIndicator() -> None:
-            color = Colors.GREEN.value if self._failsafeOn else Colors.GREY.value
-            glowColor = "rgba(48, 209, 88, 0.5)" if self._failsafeOn else "transparent"
-            msg = "Fail-safe: Armed"
+            color = "#30d158" if self._failsafeOn else "#6b7280"
+            statusText = "Armed" if self._failsafeOn else "Disarmed"
+            self._failsafeThresholdBadge.setText(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
+            msg = f"Fail-safe: {statusText} (GPU >= {self.FAILSAFE_GPU_TEMP}°C, CPU >= {self.FAILSAFE_CPU_TEMP}°C)\nClick to toggle. Right-click to adjust limits."
+
             if self._failsafeTempIsHighTs > 0:
-                color = Colors.YELLOW.value
-                glowColor = "rgba(255, 214, 10, 0.6)"
+                color = "#ffd60a"
                 msg = f"Last high temp: {time.strftime('%H:%M:%S', time.localtime(self._failsafeTempIsHighTs))}"
                 if self._failsafeTrippedPrevModeStr is not None:
-                    color = Colors.RED.value
-                    glowColor = "rgba(255, 69, 58, 0.8)"
+                    color = "#ff453a"
                     msg = "Fail-safe ACTIVE: G-Mode forced"
-            failsafeIndicator.setStyleSheet(f"""
-                QLabel {{
-                    min-height: 10px; min-width: 10px;
-                    max-height: 10px; max-width: 10px;
-                    border-radius: 5px;
-                    background: {color};
-                    border: 1px solid rgba(255, 255, 255, 0.3);
-                }}
-            """)
-            failsafeIndicator.setToolTip(msg)
+
+            failsafeIndicator.setStyleSheet(f"color: {color}; font-size: 10px; font-weight: 900;")
+            failsafeLabel.setStyleSheet(f"color: {'#f5f5f7' if self._failsafeOn else '#6b7280'}; font-size: 11px; font-weight: 600;")
+            self._failsafeBtn.setToolTip(msg)
+
         self._updFailsafeIndicator = updFailsafeIndicator
         updFailsafeIndicator()
 
-        # Fail-safe combo thresholds
-        self._limitTempGPU = QtWidgets.QComboBox()
-        self._limitTempGPU.addItems([str(v) for v in range(50, 91)])
-        self._limitTempGPU.setToolTip("GPU limit (°C)")
-        self._limitTempGPU.setFixedWidth(52)
-
-        self._limitTempCPU = QtWidgets.QComboBox()
-        self._limitTempCPU.addItems([str(v) for v in range(50, 101)])
-        self._limitTempCPU.setToolTip("CPU limit (°C)")
-        self._limitTempCPU.setFixedWidth(52)
-
-        def onLimitGPUChange():
-            val = self._limitTempGPU.currentText()
-            if val.isdigit(): self.FAILSAFE_GPU_TEMP = int(val)
-        self._limitTempGPU.currentIndexChanged.connect(onLimitGPUChange)
-
-        def onLimitCPUChange():
-            val = self._limitTempCPU.currentText()
-            if val.isdigit(): self.FAILSAFE_CPU_TEMP = int(val)
-        self._limitTempCPU.currentIndexChanged.connect(onLimitCPUChange)
-
-        # Fail-safe Checkbox
-        self._failsafeCB = QtWidgets.QCheckBox("Fail-safe")
-        self._failsafeCB.setToolTip(f"Trip G-mode if GPU >= {self.FAILSAFE_GPU_TEMP}°C or CPU >= {self.FAILSAFE_CPU_TEMP}°C.")
-        def onFailsafeCB():
-            self._failsafeOn = self._failsafeCB.isChecked()
+        def onFailsafeToggle():
+            self._failsafeOn = not self._failsafeOn
             self._failsafeTempIsHighTs = 0
             self._failsafeTrippedPrevModeStr = None
             self._failsafeTempIsHighStartTs = None
             self._failsafeHardTempStartTs = None
             updFailsafeIndicator()
-        self._failsafeCB.toggled.connect(onFailsafeCB)
-        self._failsafeCB.setChecked(self._failsafeOn)
 
-        # Fail-safe glass cluster frame
-        failsafeFrame = QtWidgets.QFrame()
-        failsafeFrame.setObjectName("FailSafeCluster")
-        failsafeBox = QtWidgets.QHBoxLayout(failsafeFrame)
-        failsafeBox.setSpacing(6)
-        failsafeBox.setContentsMargins(8, 2, 8, 2)
-        failsafeBox.addWidget(failsafeIndicator)
-        failsafeBox.addWidget(self._failsafeCB)
-        failsafeBox.addWidget(self._limitTempGPU)
-        failsafeBox.addWidget(self._limitTempCPU)
+        self._failsafeBtn.clicked.connect(onFailsafeToggle)
 
-        # Bottom control bar: Single clean horizontal row
-        ctrlBox = QtWidgets.QHBoxLayout()
-        ctrlBox.setContentsMargins(2, 4, 2, 2)
-        ctrlBox.setSpacing(10)
-        ctrlBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        ctrlBox.addStretch(1)
-        ctrlBox.addWidget(failsafeFrame, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        def showThresholdMenu(point):
+            menu = QtWidgets.QMenu(self)
+            menu.setStyleSheet("""
+                QMenu {
+                    background: #181b24;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    border-radius: 8px;
+                    padding: 4px;
+                    color: #f5f5f7;
+                    font-size: 11px;
+                }
+                QMenu::item {
+                    padding: 4px 16px;
+                    border-radius: 4px;
+                }
+                QMenu::item:selected {
+                    background: rgba(10, 132, 255, 0.5);
+                }
+                QMenu::separator {
+                    height: 1px;
+                    background: rgba(255, 255, 255, 0.10);
+                    margin: 4px 6px;
+                }
+            """)
+            gpuMenu = menu.addMenu(f"GPU Threshold ({self.FAILSAFE_GPU_TEMP}°C)")
+            for gVal in [70, 75, 80, 85, 90]:
+                act = gpuMenu.addAction(f"{gVal} °C" + (" ✓" if gVal == self.FAILSAFE_GPU_TEMP else ""))
+                act.triggered.connect(lambda _, v=gVal: self._setGpuLimit(v))
 
-        # Main window layout: 2 rows only! Ultra compact and sleek!
+            cpuMenu = menu.addMenu(f"CPU Threshold ({self.FAILSAFE_CPU_TEMP}°C)")
+            for cVal in [80, 85, 90, 95, 100]:
+                act = cpuMenu.addAction(f"{cVal} °C" + (" ✓" if cVal == self.FAILSAFE_CPU_TEMP else ""))
+                act.triggered.connect(lambda _, v=cVal: self._setCpuLimit(v))
+
+            menu.exec(self._failsafeBtn.mapToGlobal(point))
+
+        self._failsafeBtn.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self._failsafeBtn.customContextMenuRequested.connect(showThresholdMenu)
+        glassBox.addWidget(self._failsafeBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # Main window layout: 2 rows only! Solid Content + Floating Liquid Glass Navigation
         mainLayout = QtWidgets.QVBoxLayout(self)
-        mainLayout.setContentsMargins(10, 8, 10, 8)
-        mainLayout.setSpacing(8)
+        mainLayout.setContentsMargins(12, 10, 12, 10)
+        mainLayout.setSpacing(10)
         mainLayout.addLayout(lTherm)
-        mainLayout.addLayout(ctrlBox)
+        mainLayout.addWidget(glassContainer)
+        mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
 
         self.adjustSize()
@@ -705,6 +818,16 @@ class TCC_GUI(QtWidgets.QWidget):
         self.settings.setValue(SettingsKey.FailSafeIsOnFlag.value, self._failsafeOn)
         self.settings.setValue(SettingsKey.AutoBatterySwitch.value, self._autoBatterySwitch)
 
+    def _setGpuLimit(self, limit: int):
+        self.FAILSAFE_GPU_TEMP = limit
+        self._updFailsafeIndicator()
+        self._saveAppSettings()
+
+    def _setCpuLimit(self, limit: int):
+        self.FAILSAFE_CPU_TEMP = limit
+        self._updFailsafeIndicator()
+        self._saveAppSettings()
+
     def _loadAppSettings(self):
         savedMode = self.settings.value(SettingsKey.Mode.value)
         if savedMode not in [m.value for m in MODE_ORDER] or savedMode == ThermalMode.G_Mode.value:
@@ -714,12 +837,16 @@ class TCC_GUI(QtWidgets.QWidget):
         self._thermalCPU.setSpeedSlider(savedSpeed)
         savedSpeed = self.settings.value(SettingsKey.GPUFanSpeed.value)
         self._thermalGPU.setSpeedSlider(savedSpeed)
-        savedTemp = self.settings.value(SettingsKey.CPUThresholdTemp.value) or 95
-        self._limitTempCPU.setCurrentText(str(savedTemp))
-        savedTemp = self.settings.value(SettingsKey.GPUThresholdTemp.value) or 85
-        self._limitTempGPU.setCurrentText(str(savedTemp))
-        savedFailsafe = self.settings.value(SettingsKey.FailSafeIsOnFlag.value) or 'true'
-        self._failsafeCB.setChecked(str(savedFailsafe).lower() == 'true')
+        savedTemp = self.settings.value(SettingsKey.CPUThresholdTemp.value)
+        if savedTemp is not None and str(savedTemp).isdigit():
+            self.FAILSAFE_CPU_TEMP = int(savedTemp)
+        savedTemp = self.settings.value(SettingsKey.GPUThresholdTemp.value)
+        if savedTemp is not None and str(savedTemp).isdigit():
+            self.FAILSAFE_GPU_TEMP = int(savedTemp)
+        savedFailsafe = self.settings.value(SettingsKey.FailSafeIsOnFlag.value)
+        if savedFailsafe is not None:
+            self._failsafeOn = str(savedFailsafe).lower() == 'true'
+        self._updFailsafeIndicator()
         savedBattery = self.settings.value(SettingsKey.AutoBatterySwitch.value)
         if savedBattery is not None:
             self._autoBatterySwitch = str(savedBattery).lower() == 'true'
@@ -760,68 +887,37 @@ def runApp(startMinimized=False) -> int:
     # Apple Liquid Glass stylesheet
     mainWindow.setStyleSheet(f"""
         QWidget#QMainWindow {{
-            background-color: {Colors.DARK_GREY.value};
+            background-color: #0b0d13;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", sans-serif;
         }}
 
+        /* Solid high-contrast telemetry cards (Rule: never glass on content) */
         QWidget#ThermalCard {{
-            background: rgba(255, 255, 255, 0.035);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-top: 1px solid rgba(255, 255, 255, 0.14);
-            border-radius: 12px;
+            background-color: #13161f;
+            border: 1px solid #1f2535;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 14px;
         }}
 
-        QFrame#FailSafeCluster {{
-            background: rgba(0, 0, 0, 0.40);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 8px;
-        }}
-
-        QCheckBox {{
-            color: #c8cbd2;
-            font-size: 11px;
-            font-weight: 500;
-            spacing: 5px;
-        }}
-        QCheckBox::indicator {{
-            width: 13px;
-            height: 13px;
-            border-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.20);
-            background: rgba(255, 255, 255, 0.05);
-        }}
-        QCheckBox::indicator:hover {{
-            border-color: rgba(255, 255, 255, 0.40);
-            background: rgba(255, 255, 255, 0.08);
-        }}
-        QCheckBox::indicator:checked {{
-            background: {Colors.BLUE.value};
-            border-color: {Colors.BLUE.value};
-        }}
-
-        QComboBox {{
-            background: rgba(255, 255, 255, 0.06);
+        /* Floating Unified Liquid Glass Control Bar (Rule: group in GlassEffectContainer) */
+        QFrame#GlassEffectContainer {{
+            background: rgba(22, 26, 36, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.10);
-            border-radius: 5px;
-            padding: 2px 4px;
-            color: {Colors.WHITE.value};
-            font-size: 11px;
-            font-weight: 500;
+            border-top: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 18px;
         }}
-        QComboBox:hover {{
-            background: rgba(255, 255, 255, 0.10);
-            border-color: rgba(255, 255, 255, 0.22);
+
+        QPushButton#GlassFailSafeButton {{
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 14px;
         }}
-        QComboBox::drop-down {{
-            border: none;
-            width: 10px;
+        QPushButton#GlassFailSafeButton:hover {{
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.20);
         }}
-        QComboBox QAbstractItemView {{
-            background: #14171d;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 6px;
-            color: #f5f5f7;
-            selection-background-color: rgba(10, 132, 255, 0.5);
+        QPushButton#GlassFailSafeButton:pressed {{
+            background: rgba(255, 255, 255, 0.14);
         }}
 
         QSlider::groove:horizontal {{
@@ -834,11 +930,11 @@ def runApp(startMinimized=False) -> int:
             border-radius: 2px;
         }}
         QSlider::sub-page:horizontal:disabled {{
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.04);
         }}
         QSlider::handle:horizontal {{
             background: #ffffff;
-            border: 1px solid rgba(0, 0, 0, 0.20);
+            border: 1px solid rgba(0, 0, 0, 0.25);
             width: 14px;
             margin-top: -5px;
             margin-bottom: -5px;
@@ -849,14 +945,14 @@ def runApp(startMinimized=False) -> int:
             border-color: {Colors.BLUE.value};
         }}
         QSlider::handle:horizontal:disabled {{
-            background: #4a5060;
+            background: #3a4050;
             border-color: transparent;
         }}
 
         QToolTip {{
             background: rgba(18, 20, 26, 0.96);
             color: {Colors.WHITE.value};
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 6px;
             padding: 5px 8px;
             font-size: 11px;

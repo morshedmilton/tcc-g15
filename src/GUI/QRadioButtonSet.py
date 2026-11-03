@@ -2,7 +2,7 @@ from typing import Callable, Optional, Tuple, Union
 from PySide6 import QtCore, QtWidgets
 
 class QRadioButtonSet(QtWidgets.QWidget):
-    _buttons: dict[str, QtWidgets.QRadioButton]
+    _buttons: dict[str, QtWidgets.QPushButton]
     _userCallback: Optional[Callable[[str], None]]
 
     def __init__(self, parent: Optional[QtWidgets.QWidget], title: Optional[str],
@@ -12,76 +12,75 @@ class QRadioButtonSet(QtWidgets.QWidget):
         if len(options) == 0:
             raise RuntimeError('"options" list length can not be 0')
 
-        self.setObjectName('SegmentedControl')
+        self.setObjectName('GlassSegmentedControl')
+        self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
 
-        if layout is None:
-            layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(3, 3, 3, 3)
-        layout.setSpacing(2)
-        self.setLayout(layout)
+        hLayout = QtWidgets.QHBoxLayout(self)
+        hLayout.setContentsMargins(4, 4, 4, 4)
+        hLayout.setSpacing(4)
 
         if title:
             lbl = QtWidgets.QLabel(title)
             lbl.setStyleSheet("color: #8b92a0; font-size: 11px; font-weight: 500; margin-right: 4px;")
-            layout.addWidget(lbl)
+            hLayout.addWidget(lbl)
+
+        self._buttonGroup = QtWidgets.QButtonGroup(self)
+        self._buttonGroup.setExclusive(True)
 
         self._userCallback = None
         self._buttons = {}
         for label, value in options:
-            rb = QtWidgets.QRadioButton(label)
-            rb._value = value
-            rb.setFixedHeight(26)
-            rb.setCursor(QtCore.Qt.PointingHandCursor)
-            layout.addWidget(rb)
-            self._buttons[value] = rb
-            rb.setChecked(True)
-            rb.toggled.connect(self._onClicked)
+            btn = QtWidgets.QPushButton(label)
+            btn._value = value
+            btn.setCheckable(True)
+            btn.setFixedHeight(28)
+            btn.setCursor(QtCore.Qt.PointingHandCursor)
+            self._buttonGroup.addButton(btn)
+            hLayout.addWidget(btn)
+            self._buttons[value] = btn
+            btn.toggled.connect(self._onClicked)
 
-        # Style as Apple/Linear segmented liquid glass pill
+        # Style as true Apple Liquid Glass segmented control
         self.setStyleSheet("""
-            QWidget#SegmentedControl {
-                background: rgba(0, 0, 0, 0.40);
+            QWidget#GlassSegmentedControl {
+                background: rgba(0, 0, 0, 0.25);
                 border: 1px solid rgba(255, 255, 255, 0.08);
-                border-radius: 8px;
+                border-radius: 14px;
             }
-            QRadioButton {
+            QPushButton {
                 color: #8e95a5;
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 500;
-                padding: 4px 10px;
-                border-radius: 6px;
+                padding: 4px 12px;
+                border-radius: 10px;
                 border: 1px solid transparent;
                 background: transparent;
             }
-            QRadioButton::indicator {
-                width: 0px;
-                height: 0px;
-            }
-            QRadioButton:hover {
+            QPushButton:hover {
                 color: #f5f5f7;
                 background: rgba(255, 255, 255, 0.06);
             }
-            QRadioButton:checked {
+            QPushButton:checked {
                 color: #ffffff;
                 font-weight: 600;
-                background: rgba(255, 255, 255, 0.14);
-                border: 1px solid rgba(255, 255, 255, 0.20);
+                background: rgba(255, 255, 255, 0.16);
+                border: 1px solid rgba(255, 255, 255, 0.24);
             }
-            QRadioButton:disabled {
+            QPushButton:disabled {
                 color: #4a5060;
                 background: transparent;
             }
         """)
 
     def setChecked(self, value: str):
-        button = self._buttons.get(value)
-        if button is not None and not button.isChecked():
-            button.setChecked(True)
+        btn = self._buttons.get(value)
+        if btn is not None and not btn.isChecked():
+            btn.setChecked(True)
 
     def getChecked(self) -> Optional[str]:
-        for rb in self._buttons.values():
-            if rb.isChecked():
-                return rb._value
+        for btn in self._buttons.values():
+            if btn.isChecked():
+                return btn._value
         return None
 
     def setOnChange(self, callback: Callable[[str], None]) -> None:
@@ -91,8 +90,8 @@ class QRadioButtonSet(QtWidgets.QWidget):
         if value in self._buttons:
             self._buttons[value].setEnabled(enabled)
 
-    @QtCore.Slot()
-    def _onClicked(self):
-        rb = self.sender() # type: QtWidgets.QRadioButton
-        if self._userCallback and rb.isChecked():
-            self._userCallback(rb._value)
+    @QtCore.Slot(bool)
+    def _onClicked(self, checked: bool):
+        btn = self.sender()
+        if self._userCallback and checked and btn:
+            self._userCallback(btn._value)

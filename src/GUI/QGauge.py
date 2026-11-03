@@ -12,7 +12,7 @@ class QGauge(QtWidgets.QProgressBar):
         self._colorScheme = None
         self._extLabel = None
         self.setTextVisible(False)
-        self.setFixedHeight(8)
+        self.setFixedHeight(6)
 
     def setColorScheme(self, colorScheme: dict[int, str]) -> None:
         self._colorScheme = colorScheme
@@ -41,21 +41,42 @@ class QGauge(QtWidgets.QProgressBar):
     def _updateColor(self):
         if self._colorScheme:
             val = self.value()
-            color = '#0a84ff'
+            gradStop0 = '#30d158'
+            gradStop1 = '#34c759'
+            textColor = '#30d158'
+            
+            # Find matching limit
             for lim, c in self._colorScheme.items():
-                color = c
-                if val < lim: break
+                if c == '#ffd60a': # Yellow
+                    if val >= lim:
+                        gradStop0 = '#ffd60a'
+                        gradStop1 = '#ff9f0a'
+                        textColor = '#ffd60a'
+                elif c == '#ff453a': # Red
+                    if val >= lim:
+                        gradStop0 = '#ff453a'
+                        gradStop1 = '#ff3b30'
+                        textColor = '#ff453a'
+
+            if self._extLabel:
+                self._extLabel.setStyleSheet(f"""
+                    color: {textColor};
+                    font-size: 13px;
+                    font-weight: 700;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Text', 'Segoe UI', sans-serif;
+                """)
+
             self.setStyleSheet(f"""
                 QGauge {{
                     background: rgba(255, 255, 255, 0.08);
                     border: none;
-                    border-radius: 4px;
-                    max-height: 8px;
-                    min-height: 8px;
+                    border-radius: 3px;
+                    max-height: 6px;
+                    min-height: 6px;
                 }}
                 QGauge::chunk {{
-                    background: {color};
-                    border-radius: 4px;
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {gradStop0}, stop:1 {gradStop1});
+                    border-radius: 3px;
                 }}
             """)
         else:
@@ -63,12 +84,12 @@ class QGauge(QtWidgets.QProgressBar):
                 QGauge {
                     background: rgba(255, 255, 255, 0.08);
                     border: none;
-                    border-radius: 4px;
-                    max-height: 8px;
-                    min-height: 8px;
+                    border-radius: 3px;
+                    max-height: 6px;
+                    min-height: 6px;
                 }
                 QGauge::chunk {
                     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0a84ff, stop:1 #5ac8fa);
-                    border-radius: 4px;
+                    border-radius: 3px;
                 }
             """)

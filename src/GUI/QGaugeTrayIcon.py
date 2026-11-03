@@ -14,13 +14,17 @@ class QGaugeTrayIcon(QtGui.QPixmap):
             return None
         return QGaugeTrayIcon(self._tempColorLimits)
 
-    def update(self, temps: Tuple[int, int], stars: bool = False) -> None:
+    def update(self, temps: Tuple[Optional[int], Optional[int]], stars: bool = False) -> None:
         self.fill(QtCore.Qt.transparent)
         painter = QtGui.QPainter(self)
         font = QtGui.QFont("Consolas", self._SIZE[1] // 2)
         painter.setFont(font)
 
-        def drawVal(y: int, val: int, limits: Optional[Tuple[int,int]]):
+        def drawVal(y: int, val: Optional[int], limits: Optional[Tuple[int,int]]):
+            if val is None:
+                painter.setPen(QtGui.QColor.fromRgb(*Colors.GREY.rgb()))
+                painter.drawText(2, y, "--")
+                return
             color = Colors.GREEN
             if limits:
                 if val >= limits[1]: color = Colors.RED
