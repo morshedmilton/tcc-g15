@@ -10,69 +10,69 @@ class ThermalUnitWidget(QtWidgets.QFrame):
 
         # Header: Hardware Title + Status Tag
         self._title = QtWidgets.QLabel(self)
-        self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.5px;")
+        self._title.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.4px;")
 
         self._tagPill = QtWidgets.QLabel(self)
         self._tagPill.setStyleSheet("""
             color: #00F0FF;
             font-family: 'Orbitron', 'Cascadia Code', monospace;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             background: rgba(0, 240, 255, 0.12);
-            padding: 2px 7px;
+            padding: 1px 5px;
             border: 1px solid rgba(0, 240, 255, 0.35);
             border-radius: 2px;
         """)
 
         headerLayout = QtWidgets.QHBoxLayout()
-        headerLayout.setContentsMargins(0, 0, 0, 2)
+        headerLayout.setContentsMargins(0, 0, 0, 1)
         headerLayout.addWidget(self._title, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         headerLayout.addStretch(1)
         headerLayout.addWidget(self._tagPill, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Temp Row: [:: TEMP] [===CyberGauge===] [ 62 °C ]
-        lblTemp = QtWidgets.QLabel(":: TEMP")
-        lblTemp.setFixedWidth(55)
-        lblTemp.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
+        # Temp Row: [TEMP] [===CyberGauge===] [ 62 °C ]
+        lblTemp = QtWidgets.QLabel("TEMP")
+        lblTemp.setFixedWidth(36)
+        lblTemp.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
 
         self._tempBar = CyberGauge(self, min_val=tempMinMax[0], max_val=tempMinMax[1], unit=' °C')
         if tempColorLimits:
             self._tempBar.setColorLimits(tempColorLimits)
         self._tempBarLabel = self._tempBar.createLabel()
-        self._tempBarLabel.setFixedWidth(64)
+        self._tempBarLabel.setFixedWidth(46)
 
         tempLayout = QtWidgets.QHBoxLayout()
-        tempLayout.setSpacing(8)
+        tempLayout.setSpacing(5)
         tempLayout.addWidget(lblTemp, alignment=QtCore.Qt.AlignVCenter)
         tempLayout.addWidget(self._tempBar, 1, alignment=QtCore.Qt.AlignVCenter)
         tempLayout.addWidget(self._tempBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Fan Row: [:: TACH] [===CyberGauge===] [ 2700 RPM ]
-        lblFan = QtWidgets.QLabel(":: TACH")
-        lblFan.setFixedWidth(55)
-        lblFan.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
+        # Fan Row: [TACH] [===CyberGauge===] [ 2700 RPM ]
+        lblFan = QtWidgets.QLabel("TACH")
+        lblFan.setFixedWidth(36)
+        lblFan.setStyleSheet("color: #00F0FF; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
 
         self._fanBar = CyberGauge(self, min_val=fanMinMax[0], max_val=fanMinMax[1], unit=' RPM')
         self._fanBarLabel = self._fanBar.createLabel()
-        self._fanBarLabel.setFixedWidth(82)
+        self._fanBarLabel.setFixedWidth(60)
 
         fanLayout = QtWidgets.QHBoxLayout()
-        fanLayout.setSpacing(8)
+        fanLayout.setSpacing(5)
         fanLayout.addWidget(lblFan, alignment=QtCore.Qt.AlignVCenter)
         fanLayout.addWidget(self._fanBar, 1, alignment=QtCore.Qt.AlignVCenter)
         fanLayout.addWidget(self._fanBarLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Custom Fan Speed Offset Slider Row: [:: OFFS] [===Slider===] [ +0% ]
-        self._lblOffset = QtWidgets.QLabel(":: OFFS")
-        self._lblOffset.setFixedWidth(55)
-        self._lblOffset.setStyleSheet("color: #7D8799; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 11px; font-weight: bold;")
+        # Custom Fan Speed Offset Slider Row: [OFFS] [===Slider===] [ +0% ]
+        self._lblOffset = QtWidgets.QLabel("OFFS")
+        self._lblOffset.setFixedWidth(36)
+        self._lblOffset.setStyleSheet("color: #7D8799; font-family: 'Orbitron', 'Cascadia Code', monospace; font-size: 10px; font-weight: bold;")
 
         self._speedSliderCallback = None
         self._speedSlider = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal, self)
         self._speedSlider.setMaximum(sliderMaxAndTick[0])
         self._speedSlider.setTickInterval(sliderMaxAndTick[1])
         self._speedSlider.setTickPosition(QtWidgets.QSlider.NoTicks)
-        self._speedSlider.setFixedHeight(16)
+        self._speedSlider.setFixedHeight(14)
         self._speedSlider.setToolTip(
             "Fan speed offset over the BIOS curve.\n"
             "Active in Custom mode. Firmware floor is ~3000 RPM.")
@@ -83,20 +83,20 @@ class ThermalUnitWidget(QtWidgets.QFrame):
         self._speedSlider.valueChanged.connect(self._onSliderMoved)
 
         self._sliderValLabel = QtWidgets.QLabel("+0%")
-        self._sliderValLabel.setFixedWidth(52)
-        self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold;")
+        self._sliderValLabel.setFixedWidth(38)
+        self._sliderValLabel.setStyleSheet("color: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold;")
         self._sliderValLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         sliderLayout = QtWidgets.QHBoxLayout()
-        sliderLayout.setSpacing(8)
+        sliderLayout.setSpacing(5)
         sliderLayout.addWidget(self._lblOffset, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._speedSlider, 1, alignment=QtCore.Qt.AlignVCenter)
         sliderLayout.addWidget(self._sliderValLabel, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Main Card Layout
         cardLayout = QtWidgets.QVBoxLayout(self)
-        cardLayout.setContentsMargins(14, 12, 14, 12)
-        cardLayout.setSpacing(8)
+        cardLayout.setContentsMargins(10, 8, 10, 8)
+        cardLayout.setSpacing(5)
         cardLayout.addLayout(headerLayout)
         cardLayout.addLayout(tempLayout)
         cardLayout.addLayout(fanLayout)

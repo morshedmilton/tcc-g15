@@ -23,9 +23,21 @@ def applyWindowsGlassAndDarkTheme(hwnd: int) -> None:
         # DWMWA_USE_IMMERSIVE_DARK_MODE = 20
         v = ctypes.c_int(1)
         ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(v), 4)
+
         # DWMWA_SYSTEMBACKDROP_TYPE = 38 (3 = Acrylic, 2 = Mica)
         backdrop = ctypes.c_int(3)
         ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 38, ctypes.byref(backdrop), 4)
+
+        # Extend DWM frame into client area for full client acrylic blur
+        class MARGINS(ctypes.Structure):
+            _fields_ = [
+                ("cxLeftWidth", ctypes.c_int),
+                ("cxRightWidth", ctypes.c_int),
+                ("cyTopHeight", ctypes.c_int),
+                ("cyBottomHeight", ctypes.c_int),
+            ]
+        margins = MARGINS(-1, -1, -1, -1)
+        ctypes.windll.dwmapi.DwmExtendFrameIntoClientArea(hwnd, ctypes.byref(margins))
     except Exception:
         pass
 
@@ -154,42 +166,44 @@ def errorExit(message: str, message2: Optional[str] = None) -> None:
 
 APP_STYLESHEET = """
     QWidget#QMainWindow {
-        background: rgba(10, 12, 18, 0.82);
-        border: 1px solid rgba(0, 240, 255, 0.35);
-        border-top: 2px solid #00F0FF;
+        background: rgba(10, 14, 22, 0.40);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 6px;
         font-family: 'Orbitron', 'Cascadia Code', 'Consolas', 'Segoe UI', sans-serif;
     }
 
     QFrame#CyberCard {
-        background: rgba(16, 20, 30, 0.78);
-        border: 1px solid rgba(0, 240, 255, 0.25);
-        border-top: 2px solid rgba(0, 240, 255, 0.65);
+        background: rgba(18, 24, 38, 0.45);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-top: 1px solid rgba(255, 255, 255, 0.22);
         border-radius: 4px;
     }
 
     QFrame#CyberDeck {
-        background: rgba(14, 18, 28, 0.90);
-        border: 1px solid rgba(0, 240, 255, 0.30);
+        background: rgba(16, 20, 32, 0.50);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-top: 1px solid rgba(255, 255, 255, 0.24);
         border-bottom: 2px solid #FCEE0A;
         border-radius: 4px;
     }
 
     QPushButton#CyberSafeButton {
-        background: rgba(20, 26, 38, 0.75);
+        background: rgba(255, 255, 255, 0.06);
         border: 1px solid rgba(0, 255, 102, 0.35);
-        border-radius: 2px;
-        padding: 2px 8px;
+        border-radius: 3px;
+        padding: 2px 6px;
     }
     QPushButton#CyberSafeButton:hover {
-        background: rgba(0, 255, 102, 0.18);
+        background: rgba(0, 255, 102, 0.20);
         border: 1px solid #00FF66;
     }
 
     /* Cyberpunk Fan Offset Slider */
     QSlider::groove:horizontal {
-        height: 5px;
+        height: 4px;
         background: rgba(255, 255, 255, 0.10);
-        border: 1px solid rgba(0, 240, 255, 0.20);
+        border: 1px solid rgba(255, 255, 255, 0.18);
         border-radius: 1px;
     }
     QSlider::sub-page:horizontal {
@@ -201,9 +215,9 @@ APP_STYLESHEET = """
     QSlider::handle:horizontal {
         background: #FCEE0A;
         border: 1px solid #FFFFFF;
-        width: 14px;
-        margin-top: -6px;
-        margin-bottom: -6px;
+        width: 12px;
+        margin-top: -5px;
+        margin-bottom: -5px;
         border-radius: 2px;
     }
     QSlider::handle:horizontal:hover {
@@ -220,9 +234,9 @@ APP_STYLESHEET = """
         color: #00F0FF;
         border: 1px solid rgba(0, 240, 255, 0.40);
         border-radius: 2px;
-        padding: 5px 8px;
+        padding: 4px 6px;
         font-family: 'Orbitron', 'Cascadia Code', monospace;
-        font-size: 11px;
+        font-size: 10px;
     }
 """
 
@@ -395,25 +409,25 @@ class TCC_GUI(QtWidgets.QWidget):
         self._failsafeBtn = QtWidgets.QPushButton()
         self._failsafeBtn.setObjectName("CyberSafeButton")
         self._failsafeBtn.setCursor(QtCore.Qt.PointingHandCursor)
-        self._failsafeBtn.setFixedHeight(30)
-        self._failsafeBtn.setMinimumWidth(185)
+        self._failsafeBtn.setFixedHeight(26)
+        self._failsafeBtn.setMinimumWidth(100)
 
         failsafeInner = QtWidgets.QHBoxLayout(self._failsafeBtn)
-        failsafeInner.setContentsMargins(10, 2, 10, 2)
-        failsafeInner.setSpacing(8)
+        failsafeInner.setContentsMargins(5, 2, 5, 2)
+        failsafeInner.setSpacing(4)
 
         failsafeIndicator = QtWidgets.QLabel("▲")
-        failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 11px; font-weight: 900;")
-        failsafeLabel = QtWidgets.QLabel("SAFEGUARD")
-        failsafeLabel.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;")
-        self._failsafeThresholdBadge = QtWidgets.QLabel(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
+        failsafeIndicator.setStyleSheet("color: #00FF66; font-size: 10px; font-weight: 900;")
+        failsafeLabel = QtWidgets.QLabel("SAFE")
+        failsafeLabel.setStyleSheet("color: #FFFFFF; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 800; letter-spacing: 0.3px;")
+        self._failsafeThresholdBadge = QtWidgets.QLabel(f"{self.FAILSAFE_GPU_TEMP}°/{self.FAILSAFE_CPU_TEMP}°")
         self._failsafeThresholdBadge.setStyleSheet("""
             color: #000000;
             background: #FCEE0A;
             font-family: 'Orbitron', monospace;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
-            padding: 2px 6px;
+            padding: 1px 4px;
             border-radius: 2px;
         """)
 
@@ -424,7 +438,7 @@ class TCC_GUI(QtWidgets.QWidget):
         def updFailsafeIndicator() -> None:
             color = "#00FF66" if self._failsafeOn else "#4A5262"
             statusText = "ARMED" if self._failsafeOn else "DISARMED"
-            self._failsafeThresholdBadge.setText(f"{self.FAILSAFE_GPU_TEMP}° / {self.FAILSAFE_CPU_TEMP}°")
+            self._failsafeThresholdBadge.setText(f"{self.FAILSAFE_GPU_TEMP}°/{self.FAILSAFE_CPU_TEMP}°")
             msg = f"SAFEGUARD: {statusText} (GPU >= {self.FAILSAFE_GPU_TEMP}°C, CPU >= {self.FAILSAFE_CPU_TEMP}°C)\nClick to toggle. Right-click to calibrate trip limits."
 
             if self._failsafeTempIsHighTs > 0:
@@ -434,11 +448,11 @@ class TCC_GUI(QtWidgets.QWidget):
                     color = "#FF003C"
                     msg = "SAFEGUARD ACTIVE: G-MODE OVERDRIVE ENGAGED"
 
-            failsafeIndicator.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 900;")
-            failsafeLabel.setStyleSheet(f"color: {'#FFFFFF' if self._failsafeOn else '#4A5262'}; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 800;")
+            failsafeIndicator.setStyleSheet(f"color: {color}; font-size: 10px; font-weight: 900;")
+            failsafeLabel.setStyleSheet(f"color: {'#FFFFFF' if self._failsafeOn else '#4A5262'}; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: 800;")
             self._failsafeThresholdBadge.setStyleSheet(
-                "color: #000000; background: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 2px;" if self._failsafeOn
-                else "color: #7D8799; background: rgba(255, 255, 255, 0.08); font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 2px;"
+                "color: #000000; background: #FCEE0A; font-family: 'Orbitron', monospace; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 2px;" if self._failsafeOn
+                else "color: #7D8799; background: rgba(255, 255, 255, 0.08); font-family: 'Orbitron', monospace; font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 2px;"
             )
             self._failsafeBtn.setToolTip(msg)
 
@@ -465,10 +479,10 @@ class TCC_GUI(QtWidgets.QWidget):
                     padding: 4px;
                     color: #FFFFFF;
                     font-family: 'Orbitron', 'Cascadia Code', monospace;
-                    font-size: 11px;
+                    font-size: 10px;
                 }
                 QMenu::item {
-                    padding: 5px 18px;
+                    padding: 4px 14px;
                 }
                 QMenu::item:selected {
                     background: rgba(0, 240, 255, 0.25);
@@ -477,7 +491,7 @@ class TCC_GUI(QtWidgets.QWidget):
                 QMenu::separator {
                     height: 1px;
                     background: rgba(0, 240, 255, 0.30);
-                    margin: 4px 6px;
+                    margin: 3px 4px;
                 }
             """)
             gpuMenu = menu.addMenu(f"GPU TRIP THRESHOLD [{self.FAILSAFE_GPU_TEMP}°C]")
@@ -496,14 +510,12 @@ class TCC_GUI(QtWidgets.QWidget):
         self._failsafeBtn.customContextMenuRequested.connect(showThresholdMenu)
         deckBox.addWidget(self._failsafeBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        # Main window layout: 2 rows only! Cyberpunk HUD Layout
+        # Main window layout: 2 rows only! Compact Cyberpunk HUD Layout
         mainLayout = QtWidgets.QVBoxLayout(self)
-        mainLayout.setContentsMargins(12, 10, 12, 10)
-        mainLayout.setSpacing(10)
+        mainLayout.setContentsMargins(8, 8, 8, 8)
+        mainLayout.setSpacing(6)
         mainLayout.addLayout(lTherm)
         mainLayout.addWidget(cyberDeck)
-        mainLayout.setAlignment(QtCore.Qt.AlignTop)
-        mainLayout.setAlignment(QtCore.Qt.AlignTop)
         mainLayout.setAlignment(QtCore.Qt.AlignTop)
 
         self.adjustSize()

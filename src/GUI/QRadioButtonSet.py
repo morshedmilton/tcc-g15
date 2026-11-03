@@ -17,11 +17,11 @@ class QRadioButtonSet(QtWidgets.QWidget):
 
         hLayout = QtWidgets.QHBoxLayout(self)
         hLayout.setContentsMargins(0, 0, 0, 0)
-        hLayout.setSpacing(6)
+        hLayout.setSpacing(4)
 
         if title:
             lbl = QtWidgets.QLabel(title)
-            lbl.setStyleSheet("color: #7D8799; font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold; margin-right: 4px;")
+            lbl.setStyleSheet("color: #7D8799; font-family: 'Orbitron', monospace; font-size: 10px; font-weight: bold; margin-right: 2px;")
             hLayout.addWidget(lbl)
 
         self._buttonGroup = QtWidgets.QButtonGroup(self)
@@ -32,11 +32,13 @@ class QRadioButtonSet(QtWidgets.QWidget):
         for label, value in options:
             btnText = label.upper().replace('_', ' ')
             if "G MODE" in btnText or "G_MODE" in btnText:
-                btnText = "G-MODE // OVRD"
+                btnText = "G-MODE"
+            elif "PERFORMANCE" in btnText:
+                btnText = "PERF"
             btn = QtWidgets.QPushButton(btnText)
             btn._value = value
             btn.setCheckable(True)
-            btn.setFixedHeight(30)
+            btn.setFixedHeight(26)
             btn.setCursor(QtCore.Qt.PointingHandCursor)
             if "G_MODE" in value or "G-MODE" in btnText:
                 btn.setProperty("isGMode", True)
@@ -51,15 +53,15 @@ class QRadioButtonSet(QtWidgets.QWidget):
                 background: transparent;
             }
             QPushButton {
-                background: rgba(20, 26, 38, 0.70);
-                color: #8A96AA;
+                background: rgba(255, 255, 255, 0.06);
+                color: #A0ACBF;
                 font-family: 'Orbitron', 'Cascadia Code', monospace;
-                font-size: 11px;
-                font-weight: 800;
-                letter-spacing: 0.6px;
-                padding: 4px 12px;
-                border: 1px solid rgba(0, 240, 255, 0.20);
-                border-radius: 2px;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.3px;
+                padding: 2px 7px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                border-radius: 3px;
             }
             QPushButton:hover {
                 background: rgba(0, 240, 255, 0.18);
@@ -71,7 +73,7 @@ class QRadioButtonSet(QtWidgets.QWidget):
                 color: #05070A;
                 font-weight: 900;
                 border: 1px solid #FFFFFF;
-                border-radius: 2px;
+                border-radius: 3px;
             }
             QPushButton[isGMode="true"]:checked {
                 background: #FF003C;
@@ -80,7 +82,7 @@ class QRadioButtonSet(QtWidgets.QWidget):
             }
             QPushButton:disabled {
                 color: #4A5262;
-                background: rgba(15, 18, 25, 0.40);
+                background: rgba(15, 18, 25, 0.30);
                 border-color: rgba(255, 255, 255, 0.05);
             }
         """)

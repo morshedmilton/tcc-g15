@@ -20,8 +20,8 @@ class CyberGauge(QtWidgets.QWidget):
         self._unit = unit
         self._color_limits: Optional[Tuple[int, int]] = None
         self._extLabel: Optional[QtWidgets.QLabel] = None
-        self.setFixedHeight(22)
-        self.setMinimumWidth(180)
+        self.setFixedHeight(18)
+        self.setMinimumWidth(105)
 
     def setMinimum(self, val: int):
         self._min = val
@@ -66,9 +66,9 @@ class CyberGauge(QtWidgets.QWidget):
             self._extLabel.setStyleSheet(f"""
                 color: {color.name()};
                 font-family: 'Orbitron', 'Cascadia Code', 'Consolas', monospace;
-                font-size: 13px;
+                font-size: 11px;
                 font-weight: 700;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.3px;
             """)
             self._extLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         return self._extLabel
@@ -82,9 +82,9 @@ class CyberGauge(QtWidgets.QWidget):
             self._extLabel.setStyleSheet(f"""
                 color: {color.name()};
                 font-family: 'Orbitron', 'Cascadia Code', 'Consolas', monospace;
-                font-size: 13px;
+                font-size: 11px;
                 font-weight: 700;
-                letter-spacing: 0.5px;
+                letter-spacing: 0.3px;
             """)
         self.update()
 
@@ -111,21 +111,21 @@ class CyberGauge(QtWidgets.QWidget):
 
         w = float(self.width())
         h = float(self.height())
-        skew = 10.0 # Skew offset in pixels (approx 25 degrees)
+        skew = 7.0 # Compact 20-25 degree tech slant
 
-        # 1. Background Track (Angled Parallelogram)
+        # 1. Background Track (Angled Parallelogram) - Translucent Liquid Glass
         track_path = QtGui.QPainterPath()
-        track_path.moveTo(skew, 2.0)
-        track_path.lineTo(w - 2.0, 2.0)
-        track_path.lineTo(w - 2.0 - skew, h - 2.0)
-        track_path.lineTo(2.0, h - 2.0)
+        track_path.moveTo(skew, 1.5)
+        track_path.lineTo(w - 2.0, 1.5)
+        track_path.lineTo(w - 2.0 - skew, h - 1.5)
+        track_path.lineTo(2.0, h - 1.5)
         track_path.closeSubpath()
 
-        # Dark translucent carbon surface
-        painter.fillPath(track_path, QtGui.QColor(15, 20, 30, 210))
+        # Translucent glass track
+        painter.fillPath(track_path, QtGui.QColor(255, 255, 255, 20))
 
-        # Cyber border with neon cyan glow
-        painter.setPen(QtGui.QPen(QtGui.QColor(0, 240, 255, 80), 1.0))
+        # Specular glass edge
+        painter.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255, 50), 1.0))
         painter.drawPath(track_path)
 
         # 2. Fill calculation
@@ -133,16 +133,16 @@ class CyberGauge(QtWidgets.QWidget):
         if span <= 0: span = 1
         pct = max(0.0, min(1.0, (self._val - self._min) / span))
 
-        usable_w = w - skew - 6.0
+        usable_w = w - skew - 5.0
         fill_w = usable_w * pct
 
         if fill_w > 1.5:
             color = self._getCurrentColor()
             fill_path = QtGui.QPainterPath()
-            fill_path.moveTo(skew + 2.0, 4.0)
-            fill_path.lineTo(skew + 2.0 + fill_w, 4.0)
-            fill_path.lineTo(2.0 + fill_w, h - 4.0)
-            fill_path.lineTo(4.0, h - 4.0)
+            fill_path.moveTo(skew + 1.5, 3.0)
+            fill_path.lineTo(skew + 1.5 + fill_w, 3.0)
+            fill_path.lineTo(1.5 + fill_w, h - 3.0)
+            fill_path.lineTo(3.0, h - 3.0)
             fill_path.closeSubpath()
 
             # Glowing gradient fill
@@ -152,22 +152,22 @@ class CyberGauge(QtWidgets.QWidget):
             painter.fillPath(fill_path, QtGui.QBrush(grad))
 
             # Specular top glow line
-            painter.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255, 220), 1.2))
-            painter.drawLine(QtCore.QPointF(skew + 2.0, 4.0), QtCore.QPointF(skew + 2.0 + fill_w, 4.0))
+            painter.setPen(QtGui.QPen(QtGui.QColor(255, 255, 255, 220), 1.0))
+            painter.drawLine(QtCore.QPointF(skew + 1.5, 3.0), QtCore.QPointF(skew + 1.5 + fill_w, 3.0))
 
         # 3. Tactical Divider Hatches along the gauge
-        num_segments = 12
-        painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 160), 1.5))
+        num_segments = 8
+        painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0, 140), 1.2))
         for i in range(1, num_segments):
             frac = i / float(num_segments)
-            x_top = skew + 2.0 + usable_w * frac
-            x_bot = 2.0 + usable_w * frac
-            painter.drawLine(QtCore.QPointF(x_top, 3.0), QtCore.QPointF(x_bot, h - 3.0))
+            x_top = skew + 1.5 + usable_w * frac
+            x_bot = 1.5 + usable_w * frac
+            painter.drawLine(QtCore.QPointF(x_top, 2.5), QtCore.QPointF(x_bot, h - 2.5))
 
         # 4. Tactical Tick Marks on bottom
-        painter.setPen(QtGui.QPen(QtGui.QColor(0, 240, 255, 120), 1.0))
-        for step in [0.0, 0.25, 0.50, 0.75, 1.0]:
+        painter.setPen(QtGui.QPen(QtGui.QColor(0, 240, 255, 100), 1.0))
+        for step in [0.0, 0.50, 1.0]:
             x_b = 2.0 + usable_w * step
-            painter.drawLine(QtCore.QPointF(x_b, h - 2.0), QtCore.QPointF(x_b - 2.0, h + 1.0))
+            painter.drawLine(QtCore.QPointF(x_b, h - 1.5), QtCore.QPointF(x_b - 1.5, h + 1.0))
 
         painter.end()

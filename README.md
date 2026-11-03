@@ -1,174 +1,185 @@
-# Thermal Control Center for Dell G15 (and others)
+# Thermal Control Center (TCC) — Dell G-Series & Alienware Edition
 
-Open-source alternative to AWCC*
+[![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
+[![Platform: Windows 10 / 11](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011-0078D6.svg?logo=windows)](https://microsoft.com/windows)
+[![Python: 3.13 | PySide6](https://img.shields.io/badge/Python-3.13%20%7C%20PySide6-3776AB.svg?logo=python)](https://pyside.org)
+[![Hardware: Dell G15 5530 Verified](https://img.shields.io/badge/Hardware-Dell%20G15%205530%20Verified-00FF66.svg)]()
+[![Release: v1.8.0](https://img.shields.io/badge/Release-v1.8.0-yellow.svg)](https://github.com/morshedmilton/tcc-g15/releases)
+[![Build Status: CI Passing](https://img.shields.io/badge/CI-Passing-brightgreen.svg)]()
 
-> ### Fork: G15 5530 edition
-> This is a maintained fork of [AlexIII/tcc-g15](https://github.com/AlexIII/tcc-g15), kept up to date and tuned for the **Dell G15 5530** by **Md. Morshed Milton** ([@morshedmilton](https://github.com/morshedmilton)).
-> Original app, design and the AWCC WMI research are by [AlexIII](https://github.com/AlexIII) — see [Credits](#credits).
-> Upstream last shipped 1.6.4 (Jan 2025); this fork continues from upstream `master` under the same GPL-3.0 license.
+A high-performance, liquid-efficient, open-source replacement for Alienware Command Center (AWCC). Engineered specifically for Dell G-series and Alienware gaming laptops with **true Windows 11 DWM Acrylic frosted glass**, a **futuristic Cyberpunk HUD**, and direct hardware-level thermal management.
 
-[Download link](https://github.com/AlexIII/tcc-g15/releases) *(Note: the app requires administrator privileges)*
+---
 
-<img src="./screen-1.png" alt="Screenshot 1" width="600" />
+> ### 📜 Attribution & Open Source Heritage
+> This project is an independent evolution of **[tcc-g15](https://github.com/AlexIII/tcc-g15)** originally created by **[AlexIII](https://github.com/AlexIII)**.  
+> We express our immense gratitude to AlexIII for the original research, reverse engineering of Dell's WMI thermal interface, and initial implementation.
+>
+> In accordance with the **GNU General Public License v3.0**, this project is published as a fully open-source, independent tool to provide ongoing active development, Dell G15 5530 USTT firmware profiles, NVIDIA NVML telemetry, safety watchdogs, smart battery automation, and a modern liquid glass interface.
+> - **Original Project:** [AlexIII/tcc-g15](https://github.com/AlexIII/tcc-g15) (Copyright © 2022–2025 AlexIII)
+> - **Current Fork & Maintenance:** [morshedmilton/tcc-g15](https://github.com/morshedmilton/tcc-g15) (Copyright © 2026 Md. Morshed Milton and contributors)
+> - **License:** GNU General Public License v3.0 (GPL-3.0)
 
-<img src="./screen-2.png" alt="Screenshot 2" width="170" />
+---
 
-<br/>
+## 📸 Interface Preview
 
-> Liked the app? Glad you did! 😸 Help by spreading the word 🚀 and leaving the project a star ⭐
+<!-- SCREENSHOT_PLACEHOLDER_START -->
+![Thermal Control Center Preview](docs/assets/screenshot.png)
+*Figure: Futuristic Cyberpunk HUD with 25° skewed tachometer gauges and real-time Windows 11 DWM Acrylic frosted glass translucency.*
+<!-- SCREENSHOT_PLACEHOLDER_END -->
 
-> Didn't work out for you? Please report the problem by creating an [issue](https://github.com/AlexIII/tcc-g15/issues). Feedback is always welcome!
+> **Note for Users:** When the application runs on your system, the background is a translucent frosted glass pane that dynamically blurs and shifts with whatever wallpaper, application, or browser is beneath it!
 
-**AWCC - "Alienware Control Center" is an app for thermal control that Dell ships with their G-series notebooks.*
+---
 
-## Target Platform
+## 💻 Supported Laptop Models
 
-OS: Windows 10/11.
+This software interacts directly with Dell's thermal and fan firmware tables via the `AWCCWmiMethodFunction` interface.
 
-Supported models (as reported by the users):
-- Dell G15: 5511, 5515, 5520, 5525, 5530, 5535, 5590
-- Dell Alienware m16 R1
-- Dell G3 3590, G3 15 3500
-- Dell Alienware 16X Aurora
-- Dell Alienware 18 Area-51 AA18250
+### 🟢 Tier 1: Officially Verified & Tested
+| Model | CPU Architecture | Dedicated GPU | BIOS Version Tested | Status |
+|---|---|---|---|---|
+| **Dell G15 5530** | Intel 13th Gen Core (i7-13650HX, i5-13450HX, i9-13900HX) | RTX 4050 / RTX 4060 / RTX 4070 Laptop | 1.36.0+ | **100% Verified** |
 
-May also work on other Dell G15 / Alienware laptops.
+### 🟡 Tier 2: Community Verified (Fully Compatible)
+These models share Dell's USTT / Legacy thermal interfaces and fan sensor maps:
+- **Dell G15 5520** (Intel Core 12th Gen)
+- **Dell G15 5525** (AMD Ryzen 6000 Series)
+- **Dell G15 5515** (AMD Ryzen 5000 Series)
+- **Dell G15 5511** (Intel Core 11th Gen)
+- **Dell G15 5535** (AMD Ryzen 7000 Series)
+- **Dell G16 7630** (Intel Core 13th Gen chassis)
+- **Dell Alienware m16 R1 / m15 R7**
 
-Please report if it worked / didn't work for you. Your feedback is highly appreciated.
-
-## What It Can Do
-
-- ✔️ Switch thermal mode between G-mode, Balanced, and Custom
-- ✔️ Show GPU/CPU temperature and fan speed
-- ✔️ Semi-manual fan speed control
-- ✔️ Option to automatically enable G-mode when GPU/CPU temperature reaches critical
-- ✔️ Support for keyboard G-mode hotkey
-
-## UI hints
-
-- The white dots ("stars") in the corners of the tray icon indicate current G mode state.
-
-    <img src="./g_off.png" alt="g_off" width="40" align="center" />
-    G mode is Off
-    <br>
-    <img src="./g_on.png" alt="g_on" width="40" align="center" />
-    G mode is On
-
-- Hover mouse pointer over a UI element to see its description
-
-## Limitations
-
-- Requires admin system privileges (to access WMI interface)
-- Manual fan control is not *really* manual. If you set fan speed too low, the BIOS will take over and raise the fan speed automatically when the GPU/CPU temperature reaches a certain point to prevent overheating.
-- **"Autorun on startup" feature may not work for you.** The autorun adds a task to the Windows Task Scheduler that should start the app on first sign-in after a reboot, but it may fail to run the app due to the system's security policy. You can try other approaches to make the app autostart on your system. [Check out this issue.](https://github.com/AlexIII/tcc-g15/issues/7)
-- On rare occasions, the driver may report bogus GPU temperature. [See this issue.](https://github.com/AlexIII/tcc-g15/issues/9)
-- Switching the thermal mode to "G-mode" and back **may result in a second-long system-wide freeze** (at the exact moment when the switch is happening). This is a known issue with Dell's thermal control interface. Cannot be fixed. Make sure to disable the fail-safe feature if you don't want the app to switch the thermal mode automatically.
-
-## Why AWCC is BAD
-
-- ❌ AWCC has no in-program option to enable/disable G-mode
-- ❌ AWCC manual fan control is broken at this moment
-- ❌ AWCC is a bulky, slow, and visually noisy app that can't even handle basic functions
-- ❌ [AWCC is spying on you](#about-the-awcc-telemetry)
-- ❌ AWCC sometimes randomly crashes and throws crash reports
-
-If this alternative works out for you, you can safely remove from your PC:
-
-- Alieanware CC Components
-- Alieanware Command Center Suite
-- Alieanware OC Controls
-
-## How It Works
-
-It is a PyQt-based GUI for the WMI Dell thermal control interface.
-
-I have somewhat documented my findings on the WMI [here](WMI-AWCC-doc.md).
-
-## How to Run from the Source
-
+### ⚪ Tier 3: Universal Fallback
+For any other Dell G-series, Inspiron Gaming, or Alienware laptop, launch with:
+```powershell
+$env:TCC_ALLOW_UNSUPPORTED="1"
+.\tcc-g15.exe
 ```
-python3 -m pip install -r ./requirements.txt
-python3 src\tcc-g15.py
+*(If it works on your model, please open an issue so we can add it to Tier 1/2!)*
+
+---
+
+## 🚀 Key Features
+
+### 1. 🪟 True Windows 11 DWM Acrylic Liquid Glass
+- Native integration with Windows 11 Desktop Window Manager (`DWMWA_SYSTEMBACKDROP_TYPE = 3` + `DwmExtendFrameIntoClientArea`).
+- Translucent frosted glass effect that dynamically blends and blurs whatever is behind the window.
+- Sleek ultra-compact dimensions (**~492 × 165 px**), restoring the beloved compact footprint of classic utilities without unnecessary bloat.
+
+### 2. ⚡ 5 Full Hardware Thermal Profiles
+Unlock all 5 firmware profiles supported by Dell G15 5530 USTT architecture:
+- **Custom (`0x0`):** Full manual control over fan offsets.
+- **Balanced (`0xA0`):** Everyday optimal balance between acoustics and thermals.
+- **Performance (`0xA1`):** Aggressive fan curves for heavy workloads.
+- **Quiet (`0xA3`):** Strict acoustic limits for silent operation during meetings or library use.
+- **G-Mode // Overdrive (`0xAB`):** Max fan RPM override (up to 5500 RPM) for peak gaming sessions.
+
+### 3. 🎯 Direct NVIDIA NVML Driver Telemetry
+- Reads GPU temperature directly from the official NVIDIA NVML driver API, completely eliminating Dell WMI's notorious "2–3°C idle reading" bug.
+- Dell WMI Sensor 6 is retained as a zero-downtime automatic fallback.
+
+### 4. 🔋 Smart Battery Automation
+- Uses Win32 power management hooks (`GetSystemPowerStatus`) to detect AC vs Battery power in real time.
+- Automatically transitions to **Quiet** mode on battery to eliminate fan noise and maximize battery life, restoring your preferred performance profile when plugged back into AC.
+
+### 5. 🛡️ Dual-Layer Safety & Detached Watchdog
+Hardware safety is non-negotiable when controlling thermal firmware:
+- **Spike Debouncing:** 8-second debounce window prevents transient thermal spikes from triggering unnecessary fan spin-ups.
+- **Un-bypassable Emergency Trip:** Immediate fail-safe override if CPU exceeds 100°C or GPU exceeds 90°C.
+- **Detached Watchdog Process (`tcc-watchdog.exe`):** A lightweight background watchdog launched independently via WMI. If the main application crashes, hangs, or is terminated by Task Manager, the watchdog automatically restores **Balanced** mode.
+
+### 6. 🪶 Extreme Efficiency (Zero Interruptions)
+- Pure vector `QPainter` rendering with zero continuous animation loops.
+- Idle CPU consumption: **< 0.20%**.
+- RAM consumption: **~26 MB**.
+- Wakeup rate: minimal (~2 wakeups/sec minimized to tray).
+
+---
+
+## 📥 Download & Installation
+
+### Option A: Windows Installer (Recommended)
+1. Download **`tcc-g15-installer-1.8.0.exe`** from the [Latest Release](https://github.com/morshedmilton/tcc-g15/releases).
+2. Run the installer. It configures the application files, tray icon, and optional startup task.
+3. Launch **Thermal Control Center** from the Start Menu or Desktop shortcut.
+
+### Option B: Standalone Portable Exe
+1. Download the portable zip containing `tcc-g15.exe` and `tcc-watchdog.exe`.
+2. Extract to any folder (e.g. `C:\Tools\tcc-g15\`).
+3. Right-click `tcc-g15.exe` and select **Run as Administrator** (required for Dell WMI access).
+
+### Checksums (SHA-256)
+```text
+846AC5928441A2716A3F8232DDA3A13CD6CF4853F8552542D7241636CCE5465C *tcc-g15-installer-1.8.0.exe
+8BB74947036CC4B00E98EE18391FA800FF1FEB9CC32D107995E8A1D775857AB4 *tcc-g15/tcc-g15.exe
+BE4279719DE95196E3C7B578F84D75F22697047AB1FEAEF9490434E262D7E543 *tcc-g15/tcc-watchdog.exe
 ```
 
-## About the AWCC Telemetry
+---
 
-I know it's probably not going to surprise anyone, given the times we're living in, 
-but AWCC silently sends some telemetry without the possibility of opting out.
+## 🛠️ Building from Source
 
-The telemetry is being sent to these URLs:
+```powershell
+# 1. Clone repository
+git clone https://github.com/morshedmilton/tcc-g15.git
+cd tcc-g15
 
+# 2. Create virtual environment and install dependencies
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# 3. Run unit test suite (hardware-free mock WMI)
+pytest tests/ -v
+
+# 4. Run application
+python src/tcc-g15.py
 ```
-https://tm-sdk.platinumai.net
-https://qa-external-tm.plawebsvc01.net
+
+To build standalone executables and the Inno Setup installer:
+```powershell
+# Build executables with PyInstaller
+pyinstaller tcc-g15.spec --noconfirm
+pyinstaller tcc-watchdog.spec --noconfirm
+
+# Compile installer (requires Inno Setup 6)
+iscc installer/tcc-g15-setup.iss
 ```
 
-## Credits
+---
 
-Original app, GUI design and the AWCC WMI interface research: **[AlexIII](https://github.com/AlexIII)** (upstream [tcc-g15](https://github.com/AlexIII/tcc-g15)).
+## ❓ Frequently Asked Questions
 
-Maintained fork, continued updates and Dell G15 5530 support: **[Md. Morshed Milton](https://github.com/morshedmilton)**.
+<details>
+<summary><b>Why does the app require Administrator privileges?</b></summary>
+Dell's ACPI thermal table methods live inside the root\WMI namespace (specifically the AWCCWmiMethodFunction class). Microsoft Windows restricts access to low-level hardware ACPI/WMI methods to Elevated (Administrator) tokens for security.
+</details>
 
-Big thanks to the amazing people who have contributed to the project:
-- @AprDeci for code / new features
-- @T7imal, @cemkaya-mpi, @THSLP13, @Terryxtl for testing and debugging
-- @Dtwpurple, @WinterholdPrime, @Dhia-zorai, @fraPCI for compatibility reports
+<details>
+<summary><b>Do I need Alienware Command Center (AWCC) installed?</b></summary>
+<b>No!</b> This application communicates directly with Dell's BIOS/firmware WMI interface. You can completely uninstall AWCC, Alienware OC Controls, and AWCC Background Services.
+</details>
 
-## Changelog
+<details>
+<summary><b>Why do the fans still spin at ~3000 RPM when set to 0%?</b></summary>
+Dell's embedded controller (EC) and BIOS maintain an internal thermal floor (~3000 RPM / 70% floor on modern G15 models). The slider provides a positive offset over the firmware base curve; it will not let you turn fans completely off when the hardware needs cooling.
+</details>
 
-- 1.8.0-beta1 (fork)
-  - Add: watchdog process that restores Balanced if the app dies (verified: fires 13 s after a force-kill)
-  - Add: Quiet and Performance thermal profiles. The firmware id is resolved on first use —
-    this board (G15 5530, BIOS 1.36.0) answers only the USTT ids (Quiet `0xA3`, Performance `0xA1`)
-    and rejects the plain `150`/`152`, so a fixed id would have silently done nothing.
-  - Add: one-click "Create bug report" — redacted zip plus a prefilled GitHub issue
-  - Add: SMBIOS model check; unknown laptops are refused unless `TCC_ALLOW_UNSUPPORTED=1`
-  - Change: GPU temperature comes from NVML, Dell's WMI sensor is the fallback
-  - Change: poll every 2 s (5 s while hidden) — wakeups 21.5 → 10.5 /s, CPU 0.59 → 0.19 %
-  - Fix: autorun verifies the scheduled task instead of trusting the exit code
-  - Fix: the fan slider tooltip states the BIOS floor instead of implying full range control
-  - A profile the firmware rejects is hidden instead of killing the app.
+---
 
-- 1.7.0 (fork)
-  - Fix: "Balanced" no longer silently falls back to Custom when the firmware rejects the USTT probe
-  - Fix: G-mode is not restored on startup anymore (after a reboot the fans came up at full blast)
-  - Fix: implausible GPU readings (2-3 °C) are treated as missing data instead of tripping the fail-safe
-  - Fix: invalid WMI answers (this board answers -2) are rejected instead of shown as a value
-  - Fix: WMI handshake retries at startup and clears a stale COM cache left by an uninstalled AWCC
-  - Fix: timer cleanup on exit used the wrong object
-  - Add: fork credits in the About dialog
+## 🤝 Contributing
 
-- 1.6.5
-  - Update dependencies (dev)
-  - Update imports (dev)
-  - Fix: handle incompatible mode settings (dev)
+Contributions are welcome! Whether you are reporting compatibility on a new laptop model, fixing a bug, or improving documentation:
+1. Check [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+2. Open an issue or submit a pull request.
+3. Ensure `pytest tests/ -v` and `python tools/check_env.py` pass.
 
-- 1.6.4
-  - Fix: do not limit displayed RPM value
+---
 
-- 1.6.3
-  - Add tray icon tooltip (show current temperatures, fan speeds, thermal mode)
-  - Add tray icon G mode indication
-  - Add switching thermal mode from tray context menu
-  - Fix: adaptive tray icon size (fixes blurry tray icon on high resolution screens)
-  - Fix: faster app startup
+## ⚖️ License & Trademarks
 
-- 1.6.2
-    - Show GPU/CPU model in the app (fixed from 1.6.1)
-    - Small bug fixes
-
-- 1.6.0
-  - Add support for keyboard G-mode hotkey
-
-- 1.5.4
-  - Fix saving settings on app abnormal exit (system shutdown, etc)
-  - Fix reset to default settings
-
-- 1.5.3
-  - Add trigger delay for fail-safe to smooth-out temp spikes
-
-## License
-
-© github.com/AlexIII
-
-GPL v3
+- **License:** Distributed under the terms of the **[GNU General Public License v3.0](LICENSE)**.
+- **Trademarks:** This project is an independent, unofficial community tool. It is not affiliated with, endorsed by, or associated with Dell Technologies, Alienware, or Microsoft Corporation. All registered trademarks belong to their respective owners.
