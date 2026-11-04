@@ -3,7 +3,7 @@
 **Cycle:** 007  
 **Target Release:** v1.8.7 (Auto profile restored, four-profile selector, audit fixes)  
 **Current Git Branch:** `cycle-007/auto-profile`  
-**Status:** IN PROGRESS (G6 verification complete locally; G8 packaging + G9 release pending)  
+**Status:** MERGED TO MAIN (be95983, CI run 41813288169 success); G8 packaging + G9 release pending  
 **Last Updated:** 2026-11-04T17:05:00+06:00  
 
 ---
@@ -56,8 +56,11 @@
   DEF-701 (manual click during latched fail-safe is discarded), DEF-703/705/706/707/709/710/712-715.
 - **Audit source:** `docs/engineering/audit/CYCLE-007/backend-process-switching.md` (child agent,
   partially completed; findings were re-verified against the tree before use).
-- **Next Action:** package 1.8.7 (PyInstaller + Inno + SBOM + SHA256), PR -> CI green -> squash merge
-  -> tag `v1.8.7` -> pre-release, then start Cycle 008 on DEF-716 first.
+- **Merged:** PR #7 squash-merged as `be95983`; CI on `main` run `41813288169` = success.
+  Note: the PR-time runs were never queued during a GitHub outage (500 on push, 502 on merge);
+  the post-merge run on `main` is the green evidence for this cycle.
+- **Next Action:** package 1.8.7 (PyInstaller onedir + watchdog onefile + Inno + SBOM + SHA256),
+  tag `v1.8.7`, GitHub pre-release; then Cycle 008 starting with DEF-716 (TACH reads 0 RPM).
 
 ## 3. Owner Actions Required
 *None. Autonomous execution under Master Directive §0.*
