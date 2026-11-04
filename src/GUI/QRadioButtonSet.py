@@ -7,7 +7,8 @@ class QRadioButtonSet(QtWidgets.QWidget):
 
     def __init__(self, parent: Optional[QtWidgets.QWidget], title: Optional[str],
                  options: list[Tuple[str, str]],
-                 layout: Optional[Union[QtWidgets.QHBoxLayout, QtWidgets.QVBoxLayout]] = None) -> None:
+                 layout: Optional[Union[QtWidgets.QHBoxLayout, QtWidgets.QVBoxLayout]] = None,
+                 hidden_values: Optional[list] = None) -> None:
         super().__init__(parent)
         if len(options) == 0:
             raise RuntimeError('"options" list length can not be 0')
@@ -43,6 +44,9 @@ class QRadioButtonSet(QtWidgets.QWidget):
             if "G_MODE" in value or "G-MODE" in btnText:
                 btn.setProperty("isGMode", True)
             self._buttonGroup.addButton(btn)
+            # A hidden profile keeps working through setChecked() but takes no row space.
+            if hidden_values and value in hidden_values:
+                btn.hide()
             hLayout.addWidget(btn)
             self._buttons[value] = btn
             btn.toggled.connect(self._onClicked)
@@ -104,6 +108,9 @@ class QRadioButtonSet(QtWidgets.QWidget):
     def setOptionEnabled(self, value: str, enabled: bool) -> None:
         if value in self._buttons:
             self._buttons[value].setEnabled(enabled)
+
+    def visibleValues(self) -> list:
+        return [v for v, b in self._buttons.items() if not b.isHidden()]
 
     @QtCore.Slot(bool)
     def _onClicked(self, checked: bool):

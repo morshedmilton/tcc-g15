@@ -12,7 +12,9 @@ from PySide6 import QtCore, QtWidgets
 from Backend.ProcessRule import ProcessRule
 from Backend.ProcessRulePresets import get_default_presets
 
-SUPPORTED_MODES = ["Performance", "G_Mode", "Balanced", "Quiet", "Custom"]
+# Must match the profiles the window offers (MODE_ORDER). Listing a profile that is
+# silently coerced made the dialog promise something it did not do (DEF-711).
+SUPPORTED_MODES = ["Auto", "Balanced", "G_Mode", "Custom"]
 
 DIALOG_STYLESHEET = """
 QDialog {

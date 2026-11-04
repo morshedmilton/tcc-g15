@@ -98,7 +98,7 @@ print("temperature guard: ok")
 
 # --- UI order exposes the new profiles ---------------------------------------
 names = [m.name for m in MODE_ORDER]
-assert names == ["Custom", "Balanced", "Performance", "Quiet", "G_Mode"], names
+assert names == ["Auto", "Balanced", "G_Mode", "Custom"], names
 print("mode switch order: ok", names)
 
 # --- COM cache helper is safe to call when there's nothing to clean ----------

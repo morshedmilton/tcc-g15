@@ -18,6 +18,7 @@ from GUI.TelemetryWorker import TelemetryWorker, sanitizeTemperature, queryAcPow
 from Backend.TelemetryLogger import TelemetryLogger
 import json
 from Backend.SessionMetricsTracker import SessionMetricsTracker, set_session_tracker
+from Backend.FanCurve import FanCurveDriver
 from Backend.ProcessRule import ProcessRule
 from Backend.ProcessRulePresets import get_default_presets
 from GUI.ProcessMonitorWorker import ProcessMonitorWorker
@@ -140,13 +141,19 @@ class QPeriodic:
             self._tmr.setInterval(ms)
 
 class ThermalMode(Enum):
+    # Auto is a software profile: the firmware stays in Custom and FanCurve drives the
+    # additive fan offset from the measured temperature (owner spec, REQ-701).
+    Auto = 'Auto'
     Custom = 'Custom'
     Balanced = 'Balanced'
     Performance = 'Performance'
     Quiet = 'Quiet'
     G_Mode = 'G_Mode'
 
-MODE_ORDER = [ThermalMode.Custom, ThermalMode.Balanced, ThermalMode.Performance, ThermalMode.Quiet, ThermalMode.G_Mode]
+# Exactly the four profiles the owner wants in the window and tray.
+# Performance/Quiet stay in the enum because the WMI layer knows their ids and old
+# process rules may still name them; ProcessRule coerces those to a visible profile.
+MODE_ORDER = [ThermalMode.Auto, ThermalMode.Balanced, ThermalMode.G_Mode, ThermalMode.Custom]
 
 class SettingsKey(Enum):
     Mode = "app/mode"
@@ -285,7 +292,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.6"
+    APP_VERSION = "1.8.7"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -470,7 +477,12 @@ class TCC_GUI(QtWidgets.QWidget):
         deckBox.setSpacing(2)
 
         # 1. Cyberpunk Tactical Mode Selector
-        self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
+        _hiddenModes = [m for m in ThermalMode if m not in MODE_ORDER]
+        self._modeSwitch = QRadioButtonSet(
+            None, None,
+            [(m.name.replace('_', ' '), m.value) for m in (MODE_ORDER + _hiddenModes)],
+            hidden_values=[m.value for m in _hiddenModes],
+        )
         deckBox.addWidget(self._modeSwitch, alignment=QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         deckBox.addStretch(1)
@@ -627,6 +639,7 @@ class TCC_GUI(QtWidgets.QWidget):
         self._thermalCPU.speedSliderChanged(updateFanSpeed)
 
         self._lastGoodMode = ThermalMode.Balanced.value
+        self._fanCurveDriver = FanCurveDriver(deadband_pct=3, min_interval_s=1.5)
 
         def onModeChange(val: str):
             if (
@@ -641,12 +654,34 @@ class TCC_GUI(QtWidgets.QWidget):
             self._thermalGPU.setSpeedDisabled(not isCustom)
             self._thermalCPU.setSpeedDisabled(not isCustom)
 
-            modeEnum = getattr(self._awcc.Mode, val, None)
+            if val == ThermalMode.Auto.value:
+                # The additive fan offset is only honoured by the firmware in Custom mode,
+                # so Auto selects Custom and lets the curve decide the offset.
+                modeEnum = self._awcc.Mode.Custom
+            else:
+                modeEnum = getattr(self._awcc.Mode, val, None)
             if modeEnum is None:
                 return
 
             res = self._awcc.setMode(modeEnum)
             if not res:
+                automatic = (
+                    getattr(self, '_inAutoSwitch', False)
+                    or getattr(self, '_inFailsafeSwitch', False)
+                )
+                if automatic:
+                    # A rule / battery / fail-safe switch must never take the fatal
+                    # user-command path: that stopped the watchdog and left the firmware in
+                    # its previous mode with no restore (DEF-702).
+                    print(f'Automatic switch to {val} rejected by firmware; staying on {self._lastGoodMode}')
+                    self.toasterMessage(["Switch failed", f"Firmware rejected {val}", "Thermal mode"])
+                    revert = self._lastGoodMode
+                    self._inAutoSwitch = True
+                    try:
+                        self._modeSwitch.setChecked(revert)
+                    finally:
+                        self._inAutoSwitch = False
+                    return
                 if val in (ThermalMode.Quiet.value, ThermalMode.Performance.value):
                     self._modeSwitch.setOptionEnabled(val, False)
                     self._modeSwitch.setChecked(self._lastGoodMode)
@@ -695,16 +730,16 @@ class TCC_GUI(QtWidgets.QWidget):
                 if ac is not None and self._isAcPower is not None and ac != self._isAcPower:
                     currentMode = self._modeSwitch.getChecked()
                     if not ac:
-                        if currentMode != ThermalMode.Quiet.value:
+                        if currentMode != ThermalMode.Balanced.value:
                             self._acPreferredMode = currentMode
                             self._inAutoSwitch = True
                             try:
-                                self._modeSwitch.setChecked(ThermalMode.Quiet.value)
-                                self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
+                                self._modeSwitch.setChecked(ThermalMode.Balanced.value)
+                                self.toasterMessage(["Battery Mode", "Switched to Balanced profile", "Power Profile"])
                             finally:
                                 self._inAutoSwitch = False
                     else:
-                        if currentMode == ThermalMode.Quiet.value and self._acPreferredMode:
+                        if currentMode == ThermalMode.Balanced.value and self._acPreferredMode:
                             self._inAutoSwitch = True
                             try:
                                 self._modeSwitch.setChecked(self._acPreferredMode)
@@ -776,6 +811,23 @@ class TCC_GUI(QtWidgets.QWidget):
                     self._inAutoSwitch = False
                     self._inFailsafeSwitch = False
                 self._failsafeTrippedPrevModeStr = None
+
+            # Auto profile: drive the fan offsets from the measured temperatures.
+            # Skipped entirely while a fail-safe trip is latched (INV-1 wins) and for any
+            # sensor that has no plausible reading (INV-2: never lower cooling on bad data).
+            if (self._modeSwitch.getChecked() == ThermalMode.Auto.value
+                    and self._failsafeTrippedPrevModeStr is None
+                    and not getattr(self, '_inFailsafeSwitch', False)):
+                curveNow = time.time()
+                for fanKey, fanTemp, fanIdx in (
+                    ('cpu', cpuTemp, self._awcc.CPUFanIdx),
+                    ('gpu', gpuTemp, self._awcc.GPUFanIdx),
+                ):
+                    targetPct = self._fanCurveDriver.plan(fanKey, fanTemp, curveNow)
+                    if targetPct is None:
+                        continue
+                    if self._awcc.setFanSpeed(fanIdx, targetPct):
+                        self._fanCurveDriver.confirm(fanKey, targetPct, curveNow)
 
             # Update tray icon
             self.trayIcon = self.trayIcon.resizeForScreen() or self.trayIcon
@@ -1121,11 +1173,11 @@ class TCC_GUI(QtWidgets.QWidget):
                 if isinstance(data, list):
                     for item in data:
                         if isinstance(item, dict):
-                            loaded_rules.append(ProcessRule.from_dict(item))
+                            loaded_rules.append(ProcessRule.from_dict(item).with_visible_target())
             except Exception:
                 loaded_rules = []
         if not loaded_rules:
-            loaded_rules = get_default_presets()
+            loaded_rules = [r.with_visible_target() for r in get_default_presets()]
         self._processRules = loaded_rules
 
         # If automation is disabled while active rule session was running, restore baseline
@@ -1249,11 +1301,12 @@ def runApp(startMinimized=False) -> int:
     # Apply Windows 11 DWM dark titlebar and Acrylic glass
     applyWindowsGlassAndDarkTheme(int(mainWindow.winId()))
 
-    # Compact window fitting strictly between 360px and 400px
+    # Size to what the layout actually needs. The old hard clamp to 360-400 px cut the
+    # profile row and the deck off the window (owner report: "onektai broken").
     mainWindow.adjustSize()
     hint = mainWindow.sizeHint()
-    targetWidth = max(360, min(400, hint.width()))
-    mainWindow.setFixedSize(targetWidth, hint.height())
+    targetWidth = max(560, hint.width())
+    mainWindow.setFixedSize(targetWidth, max(hint.height(), 196))
 
     if startMinimized:
         mainWindow.showMinimized()

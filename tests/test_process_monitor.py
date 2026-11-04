@@ -251,29 +251,29 @@ def test_curated_presets_catalog_and_defaults():
 
     # AAA Gaming
     assert rule_map["cyberpunk2077.exe"].target_mode == "G_Mode"
-    assert rule_map["gta5.exe"].target_mode == "Performance"
+    assert rule_map["gta5.exe"].target_mode == "Auto"
     assert rule_map["rdr2.exe"].target_mode == "G_Mode"
-    assert rule_map["eldenring.exe"].target_mode == "Performance"
-    assert rule_map["bg3.exe"].target_mode == "Performance"
+    assert rule_map["eldenring.exe"].target_mode == "Auto"
+    assert rule_map["bg3.exe"].target_mode == "Auto"
 
     # Alias matching for Baldur's Gate 3 DirectX 11
     assert rule_map["bg3.exe"].matches("bg3_dx11.exe")
     assert rule_map["bg3.exe"].matches("bg3.exe")
 
     # Competitive Esports
-    assert rule_map["cs2.exe"].target_mode == "Performance"
-    assert rule_map["r5apex.exe"].target_mode == "Performance"
-    assert rule_map["valorant-win64-shipping.exe"].target_mode == "Performance"
-    assert rule_map["fortniteclient-win64-shipping.exe"].target_mode == "Performance"
-    assert rule_map["overwatch.exe"].target_mode == "Performance"
+    assert rule_map["cs2.exe"].target_mode == "Auto"
+    assert rule_map["r5apex.exe"].target_mode == "Auto"
+    assert rule_map["valorant-win64-shipping.exe"].target_mode == "Auto"
+    assert rule_map["fortniteclient-win64-shipping.exe"].target_mode == "Auto"
+    assert rule_map["overwatch.exe"].target_mode == "Auto"
     assert rule_map["cod.exe"].target_mode == "G_Mode"
 
     # Content Creation & Benchmarks
-    assert rule_map["blender.exe"].target_mode == "Performance"
-    assert rule_map["premiere.exe"].target_mode == "Performance"
-    assert rule_map["afterfx.exe"].target_mode == "Performance"
-    assert rule_map["resolve.exe"].target_mode == "Performance"
-    assert rule_map["handbrake.exe"].target_mode == "Performance"
+    assert rule_map["blender.exe"].target_mode == "Auto"
+    assert rule_map["premiere.exe"].target_mode == "Auto"
+    assert rule_map["afterfx.exe"].target_mode == "Auto"
+    assert rule_map["resolve.exe"].target_mode == "Auto"
+    assert rule_map["handbrake.exe"].target_mode == "Auto"
     assert rule_map["cinebench.exe"].target_mode == "G_Mode"
     assert rule_map["3dmark.exe"].target_mode == "G_Mode"
 

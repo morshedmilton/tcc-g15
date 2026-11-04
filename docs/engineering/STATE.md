@@ -1,10 +1,10 @@
 # TCC-G15 Evolution Engineering Control State
 
-**Cycle:** 006  
-**Target Release:** v1.8.6 (Process-Aware Automatic Thermal Profile Switching & Custom Rules — OPP-008)  
-**Current Git Branch:** `main`  
-**Status:** COMPLETED (Cycle 006: All Gates G0 through G9 Passed, Release v1.8.6 Shipped)  
-**Last Updated:** 2026-11-04T14:50:00+06:00  
+**Cycle:** 007  
+**Target Release:** v1.8.7 (Auto profile restored, four-profile selector, audit fixes)  
+**Current Git Branch:** `cycle-007/auto-profile`  
+**Status:** IN PROGRESS (G6 verification complete locally; G8 packaging + G9 release pending)  
+**Last Updated:** 2026-11-04T17:05:00+06:00  
 
 ---
 
@@ -41,6 +41,23 @@
 | `TASK-610` | Phase 9 PR, CI, Merge, Tag v1.8.6, Release Publishing | Orchestrator A / Worker Phase 9 | **DONE** | PR #6 squash-merged, CI passed, tag v1.8.6 pushed, GitHub release published |
 
 ---
+
+## 2b. Cycle 007 Working Notes (append-only for resumability)
+
+- **Owner directive (2026-11-04):** exactly four profiles — `Auto`, `Balanced`, `G-Mode`, `Custom`;
+  Auto = temperature-driven fan curve (50 °C ≈ 3500 rpm, 80 °C+ = full speed); fix the broken/clipped UI.
+- **Delivered on branch `cycle-007/auto-profile`:** `src/Backend/FanCurve.py` (new), Auto wiring in
+  `AppGUI`, four-visible-profile selector (hidden profiles stay programmatically selectable),
+  `ProcessRule.with_visible_target()` + `_as_bool`, `SUPPORTED_MODES` aligned, window sizing fixed
+  (574x234 on hardware), version 1.8.7, CHANGELOG entry, `cycles/CYCLE-007.md`.
+- **Verified locally:** `pytest tests/ -q` → 82 passed; `ruff check .` clean; `tools/check_env.py` PASS;
+  hardware launch + screenshot `docs/baseline/cycle007-h196.png`.
+- **Open, NOT fixed in 007 (next cycle):** DEF-716 (TACH shows 0 RPM while hardware reports ~2100),
+  DEF-701 (manual click during latched fail-safe is discarded), DEF-703/705/706/707/709/710/712-715.
+- **Audit source:** `docs/engineering/audit/CYCLE-007/backend-process-switching.md` (child agent,
+  partially completed; findings were re-verified against the tree before use).
+- **Next Action:** package 1.8.7 (PyInstaller + Inno + SBOM + SHA256), PR -> CI green -> squash merge
+  -> tag `v1.8.7` -> pre-release, then start Cycle 008 on DEF-716 first.
 
 ## 3. Owner Actions Required
 *None. Autonomous execution under Master Directive §0.*
