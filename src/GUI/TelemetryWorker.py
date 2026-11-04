@@ -59,16 +59,20 @@ class TelemetryWorker(QtCore.QObject):
         self._timer: Optional[QtCore.QTimer] = None
         self._running = True
         self._comInitialized = False
+        self._worker_thread: Optional[QtCore.QThread] = None
 
     @QtCore.Slot()
     def start(self) -> None:
         """Initializes COM apartment and starts periodic sensor polling on worker thread."""
+        self._worker_thread = QtCore.QThread.currentThread()
         try:
             import pythoncom
             pythoncom.CoInitialize()
             self._comInitialized = True
+            if self._worker_thread is not None:
+                self._worker_thread.finished.connect(self._cleanupCom)
         except Exception:
-            pass
+            self._comInitialized = False
 
         if self._gpuTemp is None:
             try:
@@ -85,7 +89,7 @@ class TelemetryWorker(QtCore.QObject):
                 self.telemetryError.emit(f"Failed to instantiate AWCCThermal in worker: {ex}")
 
         self._running = True
-        self._timer = QtCore.QTimer()
+        self._timer = QtCore.QTimer(self)
         self._timer.setInterval(self._pollingIntervalMs)
         self._timer.timeout.connect(self.pollOnce)
         self._timer.start()
@@ -162,13 +166,7 @@ class TelemetryWorker(QtCore.QObject):
             self._timer.setInterval(intervalMs)
 
     @QtCore.Slot()
-    def stop(self) -> None:
-        """Stops the timer and cleanly uninitializes COM on the worker thread."""
-        self._running = False
-        if self._timer is not None:
-            self._timer.stop()
-            self._timer = None
-
+    def _cleanupCom(self) -> None:
         if self._comInitialized:
             try:
                 import pythoncom
@@ -176,3 +174,16 @@ class TelemetryWorker(QtCore.QObject):
             except Exception:
                 pass
             self._comInitialized = False
+
+    @QtCore.Slot()
+    def stop(self) -> None:
+        """Stops the timer and cleanly uninitializes COM on the worker thread."""
+        self._running = False
+        if self._timer is not None and QtCore.QThread.currentThread() == self.thread():
+            try:
+                self._timer.stop()
+            except Exception:
+                pass
+
+        if self._comInitialized and QtCore.QThread.currentThread() == getattr(self, '_worker_thread', None):
+            self._cleanupCom()

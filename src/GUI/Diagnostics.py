@@ -20,6 +20,10 @@ LOG_CANDIDATES = (
 )
 
 
+_REDACT_KEYS = {'username', 'primaryownername', 'dnshostname', 'workgroup', 'domain'}
+_SKIP_KEYS = {'serialnumber', 'uuid', 'pnpdeviceid'}
+
+
 def _wmi(classes: Tuple[str, ...]) -> dict:
     out = {}
     try:
@@ -32,7 +36,11 @@ def _wmi(classes: Tuple[str, ...]) -> dict:
                 for inst in insts:
                     row = {}
                     for key in inst.properties:
-                        if key.lower() in ('serialnumber', 'uuid', 'pnpdeviceid'):
+                        k_lower = key.lower()
+                        if k_lower in _SKIP_KEYS:
+                            continue
+                        if k_lower in _REDACT_KEYS:
+                            row[key] = '[REDACTED]'
                             continue
                         try:
                             value = getattr(inst, key, None)
