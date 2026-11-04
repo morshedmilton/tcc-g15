@@ -26,6 +26,7 @@ where each factor is an integer from 1 to 5.
 | `DEF-006` | Privacy | Diagnostics PII Redaction for UserName, PrimaryOwnerName, DNSHostName | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **FROZEN (Cycle 6)** |
 | `DEF-007` | Supply | Promote `psutil==7.2.2` to production `requirements.txt` | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **FROZEN (Cycle 6)** |
 | `DEF-009` | Arch | Dedicated QThread and Qt Signal/Slot COM apartment isolation | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **FROZEN (Cycle 6)** |
+| `DEF-716` | Bug | TACH gauge shows 0 RPM while the hardware reports ~2100 rpm | 5 | 5 | 5 | 2 | 1 | **62.5** | **P1** | **OPEN (Cycle 007 discovery)** |
 | `OPP-008` | Feature | Process-Aware Automatic Thermal Profile Switching with Custom Rules & 18 Presets | 5 | 5 | 5 | 3 | 1 | **41.7** | **P1** | **FROZEN (Cycle 6)** |
 
 ---

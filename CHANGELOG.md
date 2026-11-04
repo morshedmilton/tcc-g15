@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.7] - 2026-11-04
+
+### Added
+- **Auto profile (REQ-701/702):** the owner's four-profile selector is back on the window and tray:
+  `Auto`, `Balanced`, `G-Mode`, `Custom`. `Auto` keeps the firmware in Custom and drives the
+  additive fan offset from a real curve in `src/Backend/FanCurve.py`.
+- **Measured curve anchors:** 50 °C -> 64 % (~3500 rpm on a G15 5530), 80 °C -> 100 % (full speed),
+  piecewise linear, clamped to 0-100 %, monotonic by construction.
+- **Write policy:** per-fan deadband (3 points) plus a 1.5 s rate limit, so the fans step smoothly
+  instead of being rewritten on every telemetry tick; a missing sensor never produces a write.
+
+### Fixed
+- **DEF-704:** `Auto` had no cooling rank, so a `Balanced` rule could win arbitration against it.
+- **DEF-702:** an automatic switch failure (rule / battery / fail-safe) took the fatal user-command
+  path, which stopped the watchdog and left the firmware in the previous mode with no restore.
+- **DEF-708:** `"enabled": "false"` in a hand-edited config parsed as `True` (`bool("false")`).
+- **DEF-711:** the rules dialog offered `Performance`/`Quiet`, which were then silently rewritten.
+- **UI clipping:** the window was clamped to 360-400 px, cutting the profile row and the deck off
+  the window; it now sizes to the row that actually has to fit (560 px minimum, 196 px height).
+
+### Known issues
+- **DEF-716 (open):** the TACH gauge can show `0 RPM` while the hardware reports ~2100 rpm; the
+  telemetry worker's rpm read is being investigated. Temperature and mode paths are unaffected.
+- Process-rule targets `Performance`/`Quiet` from older configs are migrated at load
+  (`Performance -> Auto`, `Quiet -> Balanced`).
+
 ## [1.8.5] - 2026-11-04
 
 ### Added

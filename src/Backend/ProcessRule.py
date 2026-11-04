@@ -5,20 +5,44 @@ cooling severity priority arbitration, and JSON serialization.
 """
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from typing import Any, Dict
 
+logger = logging.getLogger("tcc-g15")
+
+
+def _as_bool(value: Any) -> bool:
+    """JSON stores booleans, but hand-edited configs use "false"/"0"/"no".
+
+    bool("false") is True, so a naive cast silently enables a rule the user disabled
+    (DEF-708).
+    """
+    if isinstance(value, str):
+        return value.strip().lower() not in ("", "0", "false", "no", "off")
+    return bool(value)
+
 
 # Cooling Severity Priority Matrix (ADR-006 / PRD REQ-0602):
 # G_Mode (0xAB) > Performance (0xA1) > Custom (0x00) > Balanced (0xA0) > Quiet (0xA3)
+# Auto is adaptive: it can reach full speed, so it ranks with the old Performance slot.
+# Without an entry here an Auto rule sorted below Balanced and lost arbitration (DEF-704).
 COOLING_SEVERITY_ORDER: Dict[str, int] = {
     "G_Mode": 5,
     "Performance": 4,
+    "Auto": 4,
     "Custom": 3,
     "Balanced": 2,
     "Quiet": 1,
 }
+
+# The profiles a rule may target. They must exist as buttons in the window, otherwise a
+# rule could put the firmware in a mode the UI cannot display (silent lie). Older rules
+# and presets may name Performance/Quiet; they are coerced to the nearest visible profile
+# with the intent preserved: Performance -> Auto (adaptive cooling), Quiet -> Balanced.
+VISIBLE_PROFILES = ("Auto", "Balanced", "G_Mode", "Custom")
+LEGACY_TARGET_MAP: Dict[str, str] = {"Performance": "Auto", "Quiet": "Balanced"}
 
 
 @dataclass
@@ -79,6 +103,19 @@ class ProcessRule:
             return True
         return False
 
+    def with_visible_target(self) -> "ProcessRule":
+        """Return a copy whose target is one of the four offered profiles.
+
+        Used when loading persisted rules: an old config may name Performance/Quiet, which
+        are no longer shown in the window. Coercing at load time keeps the stored file
+        untouched while guaranteeing the UI can display the active profile.
+        """
+        if self.target_mode in VISIBLE_PROFILES:
+            return self
+        coerced = LEGACY_TARGET_MAP.get(self.target_mode, "Balanced")
+        logger.info("Rule %s target %r -> %r", self.process_name, self.target_mode, coerced)
+        return ProcessRule(self.process_name, coerced, self.enabled, self.description)
+
     def __lt__(self, other: Any) -> bool:
         if not isinstance(other, ProcessRule):
             return NotImplemented
@@ -114,6 +151,6 @@ class ProcessRule:
         return cls(
             process_name=str(data.get("process_name", "")),
             target_mode=str(data.get("target_mode", "Balanced")),
-            enabled=bool(data.get("enabled", True)),
+            enabled=_as_bool(data.get("enabled", True)),
             description=str(data.get("description", "")),
         )

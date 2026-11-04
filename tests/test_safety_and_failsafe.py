@@ -23,7 +23,8 @@ def test_temperature_sanity_filter():
 
 def test_mode_order_contains_all_five_modes():
     mode_names = [m.name for m in MODE_ORDER]
-    expected = ["Custom", "Balanced", "Performance", "Quiet", "G_Mode"]
+    # Owner decision (2026-11-04): exactly four profiles are offered in the window.
+    expected = ["Auto", "Balanced", "G_Mode", "Custom"]
     assert mode_names == expected
 
 
