@@ -16,7 +16,12 @@ from Backend.GpuTemp import GpuTemperature
 from Backend.TelemetryTypes import TelemetrySnapshot
 from GUI.TelemetryWorker import TelemetryWorker, sanitizeTemperature, queryAcPowerStatus
 from Backend.TelemetryLogger import TelemetryLogger
+import json
 from Backend.SessionMetricsTracker import SessionMetricsTracker, set_session_tracker
+from Backend.ProcessRule import ProcessRule
+from Backend.ProcessRulePresets import get_default_presets
+from GUI.ProcessMonitorWorker import ProcessMonitorWorker
+from GUI.ProcessRulesDialog import ProcessRulesDialog
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
@@ -195,6 +200,22 @@ APP_STYLESHEET = """
         border: 1px solid #00FF66;
     }
 
+    QPushButton#CyberRulesButton {
+        background: rgba(20, 26, 38, 0.65);
+        border: 1px solid rgba(0, 240, 255, 0.35);
+        border-radius: 3px;
+        color: #00F0FF;
+        font-family: 'Orbitron', monospace;
+        font-size: 8px;
+        font-weight: 800;
+        padding: 1px 2px;
+    }
+    QPushButton#CyberRulesButton:hover {
+        background: rgba(0, 240, 255, 0.22);
+        border: 1px solid #00F0FF;
+        color: #FFFFFF;
+    }
+
     /* Cyberpunk Fan Offset Slider with #00FF66 -> #FCEE0A -> #FF003C Neon Gradient */
     QSlider::groove:horizontal {
         height: 4px;
@@ -264,7 +285,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.5"
+    APP_VERSION = "1.8.6"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -284,6 +305,14 @@ class TCC_GUI(QtWidgets.QWidget):
     _acPreferredMode: str = ThermalMode.Balanced.value
     _prevSavedSettingsValues: list = []
 
+    _processRules: list = []
+    _autoSwitchEnabled: bool = True
+    _baselineMode: Optional[str] = None
+    _userOverride: bool = False
+    _missingCycles: dict = {}
+    _inAutoSwitch: bool = False
+    _inFailsafeSwitch: bool = False
+
     _gModeKeySignal = QtCore.Signal()
     _gModeKeyPrevModeStr: Optional[str] = None
 
@@ -294,6 +323,13 @@ class TCC_GUI(QtWidgets.QWidget):
         super().__init__()
         self._awcc = awcc
         self._gpuTemp = GpuTemperature()
+
+        self._processRules = []
+        self._autoSwitchEnabled = True
+        self._baselineMode = None
+        self._userOverride = False
+        self._missingCycles = {}
+        self._inAutoSwitch = False
 
         self.settings = QtCore.QSettings(self.APP_URL, "AWCC")
         log_pref = self.settings.value(SettingsKey.TelemetryLogging.value, True, type=bool)
@@ -322,6 +358,9 @@ class TCC_GUI(QtWidgets.QWidget):
         self._batterySwitchAction.setCheckable(True)
         self._batterySwitchAction.setChecked(self._autoBatterySwitch)
         self._batterySwitchAction.triggered.connect(self._toggleBatterySwitch)
+
+        self._rulesAction = menu.addAction("Process Rules...")
+        self._rulesAction.triggered.connect(self.showProcessRulesDialog)
 
         menu.addSection("Settings")
         showAction = menu.addAction("Show")
@@ -427,8 +466,8 @@ class TCC_GUI(QtWidgets.QWidget):
         cyberDeck = QtWidgets.QFrame()
         cyberDeck.setObjectName("CyberDeck")
         deckBox = QtWidgets.QHBoxLayout(cyberDeck)
-        deckBox.setContentsMargins(6, 4, 6, 4)
-        deckBox.setSpacing(4)
+        deckBox.setContentsMargins(4, 3, 4, 3)
+        deckBox.setSpacing(2)
 
         # 1. Cyberpunk Tactical Mode Selector
         self._modeSwitch = QRadioButtonSet(None, None, [(m.name.replace('_', ' '), m.value) for m in MODE_ORDER])
@@ -546,6 +585,17 @@ class TCC_GUI(QtWidgets.QWidget):
 
         self._failsafeBtn.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self._failsafeBtn.customContextMenuRequested.connect(showThresholdMenu)
+
+        # 3. Tactical Process Rules Module
+        self._rulesBtn = QtWidgets.QPushButton("RULES")
+        self._rulesBtn.setObjectName("CyberRulesButton")
+        self._rulesBtn.setCursor(QtCore.Qt.PointingHandCursor)
+        self._rulesBtn.setFixedWidth(30)
+        self._rulesBtn.setFixedHeight(24)
+        self._rulesBtn.setToolTip("Process Auto-Switching Rules (Click to configure)")
+        self._rulesBtn.clicked.connect(self.showProcessRulesDialog)
+        deckBox.addWidget(self._rulesBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
         deckBox.addWidget(self._failsafeBtn, alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # Main window layout: 2 rows only! Compact Cyberpunk HUD Layout
@@ -579,6 +629,14 @@ class TCC_GUI(QtWidgets.QWidget):
         self._lastGoodMode = ThermalMode.Balanced.value
 
         def onModeChange(val: str):
+            if (
+                not getattr(self, '_inAutoSwitch', False)
+                and not getattr(self, '_inFailsafeSwitch', False)
+                and getattr(self, '_failsafeTrippedPrevModeStr', None) is None
+            ):
+                if getattr(self, '_baselineMode', None) is not None:
+                    self._userOverride = True
+
             isCustom = (val == ThermalMode.Custom.value)
             self._thermalGPU.setSpeedDisabled(not isCustom)
             self._thermalCPU.setSpeedDisabled(not isCustom)
@@ -639,12 +697,20 @@ class TCC_GUI(QtWidgets.QWidget):
                     if not ac:
                         if currentMode != ThermalMode.Quiet.value:
                             self._acPreferredMode = currentMode
-                            self._modeSwitch.setChecked(ThermalMode.Quiet.value)
-                            self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
+                            self._inAutoSwitch = True
+                            try:
+                                self._modeSwitch.setChecked(ThermalMode.Quiet.value)
+                                self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
+                            finally:
+                                self._inAutoSwitch = False
                     else:
                         if currentMode == ThermalMode.Quiet.value and self._acPreferredMode:
-                            self._modeSwitch.setChecked(self._acPreferredMode)
-                            self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile", "Power Profile"])
+                            self._inAutoSwitch = True
+                            try:
+                                self._modeSwitch.setChecked(self._acPreferredMode)
+                                self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile", "Power Profile"])
+                            finally:
+                                self._inAutoSwitch = False
                 self._isAcPower = ac
 
             # Fail-Safe Handling
@@ -686,16 +752,29 @@ class TCC_GUI(QtWidgets.QWidget):
 
             if userTrip or hardTrip:
                 self._failsafeTrippedPrevModeStr = self._modeSwitch.getChecked()
-                self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
-                self._toasterMessageCurrentMode(source='failsafe')
+                self._inAutoSwitch = True
+                self._inFailsafeSwitch = True
+                try:
+                    self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
+                    self._toasterMessageCurrentMode(source='failsafe')
+                finally:
+                    self._inAutoSwitch = False
+                    self._inFailsafeSwitch = False
                 if getattr(self, '_sessionTracker', None) is not None:
                     self._sessionTracker.record_failsafe_trip()
 
             if (self._failsafeTrippedPrevModeStr is not None and
                 (time.time() - self._failsafeTempIsHighTs) > self.FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC
             ):
-                self._modeSwitch.setChecked(self._failsafeTrippedPrevModeStr)
-                self._toasterMessageCurrentMode(source='failsafe')
+                restoreMode = self._failsafeTrippedPrevModeStr
+                self._inAutoSwitch = True
+                self._inFailsafeSwitch = True
+                try:
+                    self._modeSwitch.setChecked(restoreMode)
+                    self._toasterMessageCurrentMode(source='failsafe')
+                finally:
+                    self._inAutoSwitch = False
+                    self._inFailsafeSwitch = False
                 self._failsafeTrippedPrevModeStr = None
 
             # Update tray icon
@@ -747,6 +826,14 @@ class TCC_GUI(QtWidgets.QWidget):
         self._telemetryThread.started.connect(self._telemetryWorker.start)
         self._telemetryWorker.telemetryReady.connect(self._onTelemetryReady)
         self._telemetryThread.start()
+
+        # Start decoupled background process monitor worker thread (DEF-009 / REQ-0601)
+        self._processMonitorThread = QtCore.QThread(self)
+        self._processMonitorWorker = ProcessMonitorWorker(interval_ms=2500)
+        self._processMonitorWorker.moveToThread(self._processMonitorThread)
+        self._processMonitorThread.started.connect(self._processMonitorWorker.start)
+        self._processMonitorWorker.processes_scanned.connect(self._onProcessesScanned)
+        self._processMonitorThread.start()
 
         self._watchdog = None
         self._watchdogPid = None
@@ -815,6 +902,11 @@ class TCC_GUI(QtWidgets.QWidget):
         if getattr(self, '_telemetryThread', None) is not None:
             self._telemetryThread.quit()
             self._telemetryThread.wait(1000)
+        if getattr(self, '_processMonitorWorker', None) is not None:
+            self._processMonitorWorker.stop()
+        if getattr(self, '_processMonitorThread', None) is not None:
+            self._processMonitorThread.quit()
+            self._processMonitorThread.wait(1000)
         if self._updateGaugesTask is not None:
             self._updateGaugesTask.stop()
         self._stopWatchdog()
@@ -934,10 +1026,13 @@ class TCC_GUI(QtWidgets.QWidget):
         )
 
     def toasterMessage(self, message: List[str | None], expire=True) -> None:
-        toast = Toast(duration=ToastDuration.Short, expiration_time=(datetime.datetime.now() + datetime.timedelta(seconds=5)) if expire else None)
-        toast.text_fields = message
-        toast.AddImage(ToastDisplayImage.fromPath(resourcePath(GUI_ICON)))
-        self._toaster.show_toast(toast)
+        try:
+            toast = Toast(duration=ToastDuration.Short, expiration_time=(datetime.datetime.now() + datetime.timedelta(seconds=5)) if expire else None)
+            toast.text_fields = message
+            toast.AddImage(ToastDisplayImage.fromPath(resourcePath(GUI_ICON)))
+            self._toaster.show_toast(toast)
+        except Exception:
+            pass
 
     @staticmethod
     def _saneTemp(t: Optional[int]) -> Optional[int]:
@@ -967,6 +1062,8 @@ class TCC_GUI(QtWidgets.QWidget):
         self.settings.setValue(SettingsKey.GPUThresholdTemp.value, self.FAILSAFE_GPU_TEMP)
         self.settings.setValue(SettingsKey.FailSafeIsOnFlag.value, self._failsafeOn)
         self.settings.setValue(SettingsKey.AutoBatterySwitch.value, self._autoBatterySwitch)
+        self.settings.setValue("auto_switch_enabled", self._autoSwitchEnabled)
+        self.settings.setValue("process_rules", json.dumps([r.to_dict() for r in self._processRules]))
 
     def _setGpuLimit(self, limit: int):
         self.FAILSAFE_GPU_TEMP = limit
@@ -1001,6 +1098,120 @@ class TCC_GUI(QtWidgets.QWidget):
         if savedBattery is not None:
             self._autoBatterySwitch = str(savedBattery).lower() == 'true'
             self._batterySwitchAction.setChecked(self._autoBatterySwitch)
+        self._loadProcessRules()
+
+    def showProcessRulesDialog(self) -> None:
+        dlg = ProcessRulesDialog(self, self.settings)
+        dlg.rules_changed.connect(self._loadProcessRules)
+        dlg.exec()
+        self._loadProcessRules()
+
+    def _loadProcessRules(self) -> None:
+        savedAutoSwitch = self.settings.value("auto_switch_enabled")
+        if savedAutoSwitch is not None:
+            self._autoSwitchEnabled = str(savedAutoSwitch).lower() == "true"
+        else:
+            self._autoSwitchEnabled = True
+
+        raw_rules = self.settings.value("process_rules")
+        loaded_rules: List[ProcessRule] = []
+        if raw_rules:
+            try:
+                data = json.loads(str(raw_rules))
+                if isinstance(data, list):
+                    for item in data:
+                        if isinstance(item, dict):
+                            loaded_rules.append(ProcessRule.from_dict(item))
+            except Exception:
+                loaded_rules = []
+        if not loaded_rules:
+            loaded_rules = get_default_presets()
+        self._processRules = loaded_rules
+
+        # If automation is disabled while active rule session was running, restore baseline
+        if not self._autoSwitchEnabled:
+            if self._baselineMode is not None and not self._userOverride:
+                restore = self._baselineMode
+                self._baselineMode = None
+                self._missingCycles.clear()
+                if self._modeSwitch.getChecked() != restore:
+                    self._inAutoSwitch = True
+                    try:
+                        self._modeSwitch.setChecked(restore)
+                        self._toasterMessageCurrentMode()
+                    finally:
+                        self._inAutoSwitch = False
+
+    def _onProcessesScanned(self, active_names: set) -> None:
+        if not self._autoSwitchEnabled:
+            return
+
+        # INV-1 Hard Fail-Safe Supremacy Lockout (DEF-008 / REQ-0606)
+        if self._failsafeTrippedPrevModeStr is not None:
+            return
+
+        # Update debounce tracking for enabled rules
+        for r in self._processRules:
+            if not r.enabled:
+                continue
+            is_present = (r.process_name in active_names) or (r.process_name == "bg3.exe" and "bg3_dx11.exe" in active_names)
+            if is_present:
+                self._missingCycles[r.process_name] = 0
+            else:
+                if r.process_name in self._missingCycles:
+                    self._missingCycles[r.process_name] += 1
+
+        # Effective rules: active now or missing < 2 cycles (4.0s debounce hysteresis)
+        effective_rules = [
+            r for r in self._processRules
+            if r.enabled and self._missingCycles.get(r.process_name, 999) < 2
+        ]
+
+        # Prune rules absent for >= 2 cycles
+        stale = [name for name, count in self._missingCycles.items() if count >= 2]
+        for name in stale:
+            del self._missingCycles[name]
+
+        if effective_rules:
+            # 0-to-1 match transition: capture baseline mode
+            if self._baselineMode is None:
+                self._baselineMode = self._modeSwitch.getChecked()
+                self._userOverride = False
+
+            # If user manually changed mode during active session, suppress auto-switching
+            if self._userOverride:
+                return
+
+            # Cooling Severity Priority Matrix:
+            # G_Mode (0xAB) > Performance (0xA1) > Custom (0x00) > Balanced (0xA0) > Quiet (0xA3)
+            best_rule = max(effective_rules, key=lambda r: r.cooling_priority)
+            target_mode = best_rule.target_mode
+
+            if self._modeSwitch.getChecked() != target_mode:
+                self._inAutoSwitch = True
+                try:
+                    self._modeSwitch.setChecked(target_mode)
+                    self._toasterMessageCurrentMode()
+                finally:
+                    self._inAutoSwitch = False
+        else:
+            # All matching processes exited and debounce expired
+            if self._userOverride:
+                self._userOverride = False
+                self._baselineMode = None
+                self._missingCycles.clear()
+            elif self._baselineMode is not None:
+                restore_mode = self._baselineMode
+                self._baselineMode = None
+                self._missingCycles.clear()
+                if self._modeSwitch.getChecked() != restore_mode:
+                    self._inAutoSwitch = True
+                    try:
+                        self._modeSwitch.setChecked(restore_mode)
+                        self._toasterMessageCurrentMode()
+                    finally:
+                        self._inAutoSwitch = False
+
 
     def clearAppSettings(self):
         (isYes, _) = confirm("Reset to Default", "Do you want to reset all settings to default?", ("Reset", "Cancel"))
