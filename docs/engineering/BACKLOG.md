@@ -21,14 +21,17 @@ where each factor is an integer from 1 to 5.
 | `OPP-001` | Perf | Background worker thread for telemetry polling (decouple WMI from GUI thread) | 4 | 5 | 5 | 2 | 1 | **50.0** | **P1** | **VERIFIED (Cycle 3)** |
 | `OPP-005` | Arch | Strongly-typed `TelemetrySnapshot` immutable data transfer object | 4 | 5 | 4 | 1 | 1 | **80.0** | **P1** | **VERIFIED (Cycle 3)** |
 | `OPP-006` | Obs | Real-time session telemetry export to CSV/JSON for thermal profiling | 4 | 5 | 4 | 2 | 1 | **40.0** | **P1** | **VERIFIED (Cycle 4)** |
-| `OPP-007` | Safety | Thermal throttling excursion metrics and sustained overload warnings | 3 | 4 | 4 | 2 | 1 | **24.0** | **P2** | BACKLOG (Cycle 5) |
+| `OPP-007` | Safety | Thermal throttling excursion metrics and sustained overload warnings | 3 | 4 | 4 | 2 | 1 | **24.0** | **P2** | **VERIFIED (Cycle 5)** |
 
 ---
 
-## 2. Cycle 4 Scope (Current)
+## 2. Cycle Scope History
 
-In accordance with Master Directive §5 Phase 3:
-1. **`OPP-006` (P1 - Observability & Diagnostics):** Real-time session telemetry export to standard RFC 4180 CSV, bounded log rotation (max 5 sessions, max 10MB per file), tray menu controls, and diagnostics bug report integration.
+- **Cycle 1 (v1.8.1):** Foundational integrity & CI automation (`DEF-001` - `DEF-005`).
+- **Cycle 2 (v1.8.2):** High-reliability watchdog heartbeat & SBOM generation (`OPP-002`, `OPP-003`, `OPP-004`).
+- **Cycle 3 (v1.8.3):** Background telemetry polling worker & strongly-typed DTO (`OPP-001`, `OPP-005`).
+- **Cycle 4 (v1.8.4):** Real-time session telemetry logging & bug report integration (`OPP-006`).
+- **Cycle 5 (v1.8.5):** Session thermal analytics engine, tray peak indicators, and proactive overload advisories (`OPP-007`).
 
 ---
 

@@ -1,10 +1,10 @@
 # TCC-G15 Evolution Engineering Control State
 
-**Cycle:** 004  
-**Target Release:** v1.8.4 (Observability, Telemetry Logger & Diagnostics)  
-**Current Git Branch:** `cycle-004/telemetry-logger-observability`  
-**Status:** Verification & Packaging Complete (Phases 0–8)  
-**Last Updated:** 2026-11-04T02:15:00+06:00  
+**Cycle:** 005  
+**Target Release:** v1.8.5 (Observability, Session Thermal Analytics & Proactive Advisories)  
+**Current Git Branch:** `cycle-005/thermal-analytics-advisory`  
+**Status:** In Progress (Phases 0–5)  
+**Last Updated:** 2026-11-04T11:44:00+06:00  
 
 ---
 
@@ -13,15 +13,15 @@
 | Gate | Description | Signed By | Status | Evidence / Notes |
 |---|---|---|---|---|
 | **G0** | Delta Reconnaissance | Orchestrator, Reviewer L | **PASSED** | Baseline audited, clean git tree verified |
-| **G1** | Research & Delta Intel | Orchestrator, Reviewer L | **PASSED** | RFC 4180 CSV & bounded file retention researched |
-| **G2** | Forensic Audit (Delta) | Safety E, Security I, Reviewer L | **PASSED** | Zero-impact I/O audit for fail-safe non-interference |
-| **G3** | Prioritization & Scope | Orchestrator, Reviewer L | **PASSED** | Scoped OPP-006 (Telemetry Logger & Diagnostics) |
-| **G4** | Requirements & Traceability | Orchestrator, QA J | **PASSED** | PRD.md updated with Cycle 004 requirements |
-| **G5** | System Design & ADRs | Architect B, Safety E, Reviewer L | **PASSED** | ADR-004 accepted |
-| **G6** | Implementation Verification | QA J, Reviewer L | **PASSED** | TelemetryLogger, AppGUI, Diagnostics, TelemetryWorker updated |
-| **G7** | Multi-level Verification & HIL | QA J, Safety E | **PASSED** | 36/36 tests passing in 4.76s; ruff & check_env 100% green |
-| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller build, SBOM, Inno Setup v1.8.4 installer compiled |
-| **G9** | Cycle Evaluation & Learning | Orchestrator A | IN_PROGRESS | PR merge, GitHub release publish, CYCLE-004.md sign-off |
+| **G1** | Research & Delta Intel | Orchestrator, Reviewer L | **PASSED** | O(1) in-memory analytics & hysteresis advisory researched |
+| **G2** | Forensic Audit (Delta) | Safety E, Security I, Reviewer L | **PASSED** | Invariants INV-1 to INV-6 preserved; zero raw EC access |
+| **G3** | Prioritization & Scope | Orchestrator, Reviewer L | **PASSED** | Scoped OPP-007 (Session Thermal Analytics & Advisories) |
+| **G4** | Requirements & Traceability | Orchestrator, QA J | **PASSED** | PRD.md updated with Cycle 005 requirements |
+| **G5** | System Design & ADRs | Architect B, Safety E, Reviewer L | **PASSED** | ADR-005 accepted |
+| **G6** | Implementation Verification | QA J, Reviewer L | **PASSED** | SessionMetricsTracker, AppGUI, Diagnostics updated |
+| **G7** | Multi-level Verification & HIL | QA J, Safety E | **PASSED** | 42/42 tests passing, ruff & check_env 100% green |
+| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller, CycloneDX SBOM, Inno Setup v1.8.5 verified |
+| **G9** | Cycle Evaluation & Learning | Orchestrator A | IN_PROGRESS | PR merge & release deployment in progress |
 
 ---
 
@@ -29,16 +29,16 @@
 
 | Task ID | Description | Role | Status | Evidence |
 |---|---|---|---|---|
-| `TASK-401` | Create git feature branch `cycle-004/telemetry-logger-observability` | DevOps | **DONE** | Branch active |
-| `TASK-402` | Create `src/Backend/TelemetryLogger.py` with rotation guard (`OPP-006`) | Architect B / HAL | **DONE** | Implemented & verified |
-| `TASK-403` | Integrate `TelemetryLogger` into `TCC_GUI` & tray menu | GUI H | **DONE** | AppGUI updated |
-| `TASK-404` | Integrate session logs into `Diagnostics.build()` bug report | Systems G / GUI H | **DONE** | Diagnostics updated |
-| `TASK-405` | Maintain graceful file close in `TCC_GUI._destroy()` | Systems G / QA J | **DONE** | Clean lifecycle verified |
-| `TASK-406` | Write unit tests in `tests/test_telemetry_logger.py` | QA J | **DONE** | 6 new tests added |
-| `TASK-407` | Full test execution & regression verification | QA J | **DONE** | 36/36 passing |
-| `TASK-408` | Synchronize documentation & release notes | Orchestrator | **DONE** | CHANGELOG.md, RELEASE_NOTES_1.8.4.md |
-| `TASK-409` | Package binaries, compile SBOM, build installer | DevOps K | **DONE** | Installer & zip compiled |
-| `TASK-410` | Merge, tag `v1.8.4`, publish GitHub release | Orchestrator | IN_PROGRESS | Awaiting PR merge |
+| `TASK-501` | Create git feature branch `cycle-005/thermal-analytics-advisory` | DevOps | **DONE** | Branch active |
+| `TASK-502` | Implement `src/Backend/SessionMetricsTracker.py` | Architect B / HAL | **DONE** | SessionMetricsTracker operational |
+| `TASK-503` | Integrate `SessionMetricsTracker` into `AppGUI.py` & tray tooltip | GUI H | **DONE** | AppGUI updated |
+| `TASK-504` | Implement proactive sustained saturation advisory with cooldown | Safety E / GUI H | **DONE** | Toast integration operational |
+| `TASK-505` | Integrate `session_metrics.json` into `Diagnostics.build()` | Systems G / GUI H | **DONE** | Diagnostics bug report integration |
+| `TASK-506` | Write automated test suite in `tests/test_session_metrics.py` | QA J | **DONE** | 6 new unit tests written |
+| `TASK-507` | Full test execution & regression verification | QA J | **DONE** | 42/42 tests passing in 6.27s |
+| `TASK-508` | Synchronize documentation & release notes | Orchestrator | **DONE** | CHANGELOG, PRD, STATE, RELEASE_NOTES_1.8.5 |
+| `TASK-509` | Package binaries, compile SBOM, build installer | DevOps K | **DONE** | Installer, zip, SBOM compiled & checksummed |
+| `TASK-510` | Merge, tag `v1.8.5`, publish GitHub release | Orchestrator | IN_PROGRESS | Pull request & release publish |
 
 ---
 
@@ -47,5 +47,5 @@
 
 ---
 
-## 4. Next Scope Preview (Cycle 005)
-- Automated ACPI EC Fan Curve calibration & profiling (`OPP-007`).
+## 4. Next Scope Preview (Cycle 006)
+- Custom Thermal Profile Presets & Persistent Fan Curve profiles (`OPP-008`).

@@ -109,9 +109,15 @@ def build(appName: str, version: str) -> Tuple[Optional[str], str]:
                     z.write(recent_logs[0], arcname='telemetry.csv')
             except Exception:
                 pass
+            try:
+                from Backend.SessionMetricsTracker import get_session_tracker
+                metrics = get_session_tracker().get_summary()
+                z.writestr('session_metrics.json', json.dumps(metrics, indent=2, default=str))
+            except Exception:
+                pass
             z.writestr('README.txt',
                        'Attach this zip to the issue. It contains model/BIOS/firmware data, the '
-                       'app log, and session telemetry. Serial numbers, UUIDs and MAC addresses are stripped.\n')
+                       'app log, session metrics, and session telemetry. Serial numbers, UUIDs and MAC addresses are stripped.\n')
     except Exception as ex:
         print(f'diagnostics: could not write zip ({type(ex).__name__}: {ex})')
         zipPath = None
