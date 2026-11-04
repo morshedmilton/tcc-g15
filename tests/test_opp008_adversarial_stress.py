@@ -54,15 +54,25 @@ def mock_detect_hardware():
         yield
 
 
+from GUI.TelemetryWorker import TelemetryWorker
+from GUI.ProcessMonitorWorker import ProcessMonitorWorker
+
+
 @pytest.fixture(autouse=True)
 def mock_hotkey_and_watchdog():
     orig_hotkey = HotKey.HotKey.start
     orig_watchdog = TCC_GUI._startWatchdog
+    orig_telemetry = TelemetryWorker.start
+    orig_proc_mon = ProcessMonitorWorker.start
     HotKey.HotKey.start = lambda self: None
     TCC_GUI._startWatchdog = lambda self: None
+    TelemetryWorker.start = lambda self: None
+    ProcessMonitorWorker.start = lambda self: None
     yield
     HotKey.HotKey.start = orig_hotkey
     TCC_GUI._startWatchdog = orig_watchdog
+    TelemetryWorker.start = orig_telemetry
+    ProcessMonitorWorker.start = orig_proc_mon
 
 
 @pytest.fixture(autouse=True)
