@@ -16,6 +16,7 @@ from Backend.GpuTemp import GpuTemperature
 from Backend.TelemetryTypes import TelemetrySnapshot
 from GUI.TelemetryWorker import TelemetryWorker, sanitizeTemperature, queryAcPowerStatus
 from Backend.TelemetryLogger import TelemetryLogger
+from Backend.SessionMetricsTracker import SessionMetricsTracker, set_session_tracker
 
 GUI_ICON = 'icons/gaugeIcon.png'
 HEARTBEAT_FILE = os.path.join(tempfile.gettempdir(), 'tcc-g15.heartbeat')
@@ -263,7 +264,7 @@ class TCC_GUI(QtWidgets.QWidget):
     FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC = 60
     FAILSAFE_UNKNOWN_GRACE_SEC = 60
     APP_NAME = "Thermal Control Center for Dell G15"
-    APP_VERSION = "1.8.4"
+    APP_VERSION = "1.8.5"
     APP_DESCRIPTION = "Open-source, liquid-efficient thermal control for Dell G15."
     APP_URL = "github.com/morshedmilton/tcc-g15"
     APP_CREDITS = "Original app & research: github.com/AlexIII/tcc-g15\nMaintained fork for Dell G15 5530: github.com/morshedmilton/tcc-g15"
@@ -297,6 +298,8 @@ class TCC_GUI(QtWidgets.QWidget):
         self.settings = QtCore.QSettings(self.APP_URL, "AWCC")
         log_pref = self.settings.value(SettingsKey.TelemetryLogging.value, True, type=bool)
         self._telemetryLogger = TelemetryLogger(enabled=log_pref)
+        self._sessionTracker = SessionMetricsTracker()
+        set_session_tracker(self._sessionTracker)
 
         self.setWindowIcon(QtGui.QIcon(resourcePath(GUI_ICON)))
         self.mouseReleaseEvent = lambda evt: (
@@ -613,6 +616,11 @@ class TCC_GUI(QtWidgets.QWidget):
             if getattr(self, '_telemetryLogger', None) is not None:
                 self._telemetryLogger.log(snapshot, self._modeSwitch.getChecked())
 
+            if getattr(self, '_sessionTracker', None) is not None:
+                self._sessionTracker.update(snapshot)
+                if self._sessionTracker.should_trigger_advisory(self._modeSwitch.getChecked()):
+                    self.toasterMessage(["Thermal Advisory", "Sustained high temperatures detected. Consider a higher cooling profile.", "Thermal Safeguard"])
+
             gpuTemp = snapshot.gpu_temp
             gpuRPM = snapshot.gpu_rpm
             cpuTemp = snapshot.cpu_temp
@@ -680,6 +688,8 @@ class TCC_GUI(QtWidgets.QWidget):
                 self._failsafeTrippedPrevModeStr = self._modeSwitch.getChecked()
                 self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
                 self._toasterMessageCurrentMode(source='failsafe')
+                if getattr(self, '_sessionTracker', None) is not None:
+                    self._sessionTracker.record_failsafe_trip()
 
             if (self._failsafeTrippedPrevModeStr is not None and
                 (time.time() - self._failsafeTempIsHighTs) > self.FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC
@@ -692,7 +702,20 @@ class TCC_GUI(QtWidgets.QWidget):
             self.trayIcon = self.trayIcon.resizeForScreen() or self.trayIcon
             self.trayIcon.update((gpuTemp, cpuTemp), self._modeSwitch.getChecked() == ThermalMode.G_Mode.value)
             tray.setIcon(self.trayIcon)
-            tray.setToolTip(f"GPU: {gpuTemp or '--'} °C    {gpuRPM or '--'} RPM\nCPU: {cpuTemp or '--'} °C    {cpuRPM or '--'} RPM\nMode: {self._modeSwitch.getChecked().replace('_', ' ')}")
+
+            peakGpu = getattr(self._sessionTracker, 'peak_gpu_temp', None) if getattr(self, '_sessionTracker', None) else None
+            peakCpu = getattr(self._sessionTracker, 'peak_cpu_temp', None) if getattr(self, '_sessionTracker', None) else None
+            trips = getattr(self._sessionTracker, 'failsafe_trip_count', 0) if getattr(self, '_sessionTracker', None) else 0
+
+            gpuPeakStr = f" (Peak: {peakGpu} °C)" if peakGpu is not None else ""
+            cpuPeakStr = f" (Peak: {peakCpu} °C)" if peakCpu is not None else ""
+            tripStr = f" (Trips: {trips})" if trips > 0 else ""
+
+            tray.setToolTip(
+                f"GPU: {gpuTemp or '--'} °C{gpuPeakStr}    {gpuRPM or '--'} RPM\n"
+                f"CPU: {cpuTemp or '--'} °C{cpuPeakStr}    {cpuRPM or '--'} RPM\n"
+                f"Mode: {self._modeSwitch.getChecked().replace('_', ' ')}{tripStr}"
+            )
 
             if getattr(self, '_telemetryWorker', None) is not None:
                 self._telemetryWorker.setInterval(

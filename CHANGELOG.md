@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.5] - 2026-11-04
+
+### Added
+- **Session Thermal Analytics Engine (`OPP-007` / ADR-005):** Added `SessionMetricsTracker` recording peak CPU/GPU temperatures, minimum temperatures, running averages, maximum fan RPMs, cumulative high-temperature excursion duration, and emergency trip events in memory with zero file I/O latency.
+- **System Tray Tooltip Peak Display:** System tray tooltip now displays live peak temperatures and fail-safe trip count alongside instantaneous values (`GPU: 60 °C (Peak: 78 °C) ... Mode: Balanced (Trips: 0)`), ensuring users can inspect peak thermal stress after completing demanding workloads.
+- **Proactive Sustained Saturation Advisory:** Added intelligent advisory toast notifying the user if temperatures sustain near-critical levels (CPU >= 90°C or GPU >= 82°C for >= 30 continuous seconds) in lower cooling profiles (`Quiet` or `Balanced`), with a strict 5-minute cooldown to prevent notification fatigue.
+- **Diagnostics Bug Report Integration:** `Diagnostics.build()` now embeds `session_metrics.json` directly into the bug report zip, providing maintainers with instant high-level session thermal health metrics.
+- **Automated Test Coverage:** Added 6 new unit tests in `tests/test_session_metrics.py`, expanding the test suite to 42 tests with 100% pass rate.
+
+---
+
 ## [1.8.4] - 2026-11-04
 
 ### Added
