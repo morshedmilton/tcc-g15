@@ -3,7 +3,7 @@
 **Cycle:** 005  
 **Target Release:** v1.8.5 (Observability, Session Thermal Analytics & Proactive Advisories)  
 **Current Git Branch:** `cycle-005/thermal-analytics-advisory`  
-**Status:** In Progress (Phases 0–5)  
+**Status:** COMPLETED & SHIPPED (Cycle 005)  
 **Last Updated:** 2026-11-04T11:44:00+06:00  
 
 ---
@@ -21,7 +21,7 @@
 | **G6** | Implementation Verification | QA J, Reviewer L | **PASSED** | SessionMetricsTracker, AppGUI, Diagnostics updated |
 | **G7** | Multi-level Verification & HIL | QA J, Safety E | **PASSED** | 42/42 tests passing, ruff & check_env 100% green |
 | **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller, CycloneDX SBOM, Inno Setup v1.8.5 verified |
-| **G9** | Cycle Evaluation & Learning | Orchestrator A | IN_PROGRESS | PR merge & release deployment in progress |
+| **G9** | Cycle Evaluation & Learning | Orchestrator A | **PASSED** | PR #5 merged, tagged v1.8.5, published GitHub release |
 
 ---
 
@@ -38,7 +38,7 @@
 | `TASK-507` | Full test execution & regression verification | QA J | **DONE** | 42/42 tests passing in 6.27s |
 | `TASK-508` | Synchronize documentation & release notes | Orchestrator | **DONE** | CHANGELOG, PRD, STATE, RELEASE_NOTES_1.8.5 |
 | `TASK-509` | Package binaries, compile SBOM, build installer | DevOps K | **DONE** | Installer, zip, SBOM compiled & checksummed |
-| `TASK-510` | Merge, tag `v1.8.5`, publish GitHub release | Orchestrator | IN_PROGRESS | Pull request & release publish |
+| `TASK-510` | Merge, tag `v1.8.5`, publish GitHub release | Orchestrator | **DONE** | Release published at tag v1.8.5 |
 
 ---
 

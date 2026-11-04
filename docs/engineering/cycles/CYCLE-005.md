@@ -60,4 +60,4 @@ Cycle 005 implements the thermal observability and proactive early warning requi
 - **G6 (Implementation):** PASSED (Signed by QA J, Reviewer L)
 - **G7 (Quality Verification):** PASSED (42/42 tests passing, ruff & check_env 100% green)
 - **G8 (Packaging & Release Readiness):** PASSED (Signed by DevOps K, Reviewer L; Binaries & SBOM verified)
-- **G9 (Deployment & Release Monitoring):** IN_PROGRESS
+- **G9 (Deployment & Release Monitoring):** PASSED (Signed by Orchestrator A; Release v1.8.5 published & verified)
