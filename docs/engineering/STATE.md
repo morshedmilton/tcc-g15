@@ -3,8 +3,8 @@
 **Cycle:** 006  
 **Target Release:** v1.8.6 (Process-Aware Automatic Thermal Profile Switching & Custom Rules — OPP-008)  
 **Current Git Branch:** `cycle-006/opp-008-process-switching`  
-**Status:** IN PROGRESS (Cycle 006: Gates G0, G1, G2, G3, G4, G5 & G6 Passed)  
-**Last Updated:** 2026-11-04T13:51:00+06:00  
+**Status:** IN PROGRESS (Cycle 006: Gates G0, G1, G2, G3, G4, G5, G6, G7 & G8 Passed)  
+**Last Updated:** 2026-11-04T14:32:00+06:00  
 
 ---
 
@@ -19,8 +19,8 @@
 | **G4** | Requirements & Traceability | Orchestrator, QA J, Worker Phase 4 | **PASSED** | PRD.md updated with REQ-0601..REQ-0608 (OPP-008, DEF-006..DEF-009), 100% bidirectional traceability matrix, 18 curated presets, WBS TASK-601..TASK-610 |
 | **G5** | System Design & ADRs | Architect B, Safety E, Reviewer L | **PASSED** | ADR-006 created with complete architecture, Cooling Severity Priority Matrix, 4.0s debounce, state restoration, and INV-1 supremacy; ARCHITECTURE.md updated to rev2 with multi-threaded model and process subsystem diagrams |
 | **G6** | Implementation Verification | Implementer, QA J, Reviewer L | **PASSED** | OPP-008 modules implemented on branch `cycle-006/opp-008-process-switching`; 51/51 pytest passed, ruff clean (0 violations), check_env 10/10 ok |
-| **G7** | Multi-level Verification & HIL | QA J, Safety E | **PENDING** | Pytest suite, ruff linter, safety verification |
-| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PENDING** | PyInstaller, SBOM, Inno Setup installer v1.8.6 |
+| **G7** | Multi-level Verification & HIL | QA J, Safety E, Reviewer L | **PASSED** | 59/59 pytest passed, 8 adversarial stress suites passing, ruff clean (0 violations), check_env 10/10 ok, DEF-010 verified (`reviewer_phase7_final/handoff.md`) |
+| **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller onedir GUI (`dist/tcc-g15`), onefile watchdog (`dist/tcc-watchdog.exe`), Inno Setup installer (`tcc-g15-installer-1.8.6.exe`), portable zip (`tcc-g15-portable-1.8.6.zip`), CycloneDX SBOM (`tcc-g15-sbom.json`), SHA256SUMS.txt verified |
 | **G9** | Cycle Evaluation & Learning | Orchestrator A | **PENDING** | PR merge, git tag v1.8.6, GitHub release |
 
 ---
@@ -36,9 +36,9 @@
 | `TASK-605` | Phase 4 Requirements Engineering & Traceability (PRD.md) | Orchestrator / QA J / Worker Phase 4 | **DONE** | PRD.md updated with REQ-0601..REQ-0608, traceability matrix, WBS; Gate G4 passed |
 | `TASK-606` | Phase 5 System Design & Architecture (ADR-006) | Architect B / Safety E | **DONE** | Gate G5 passed; ADR-006 and ARCHITECTURE.md updated and verified |
 | `TASK-607` | Phase 6 Feature Branch Implementation | Implementer / QA J | **DONE** | Gate G6 passed; all OPP-008 modules, DEF-006, DEF-007, DEF-008, DEF-009 implemented & verified |
-| `TASK-608` | Phase 7 Multi-Level Automated QA & Safety Verification | QA J / Safety E | **ACTIVE** | Gate G7 verification and safety verification underway |
-| `TASK-609` | Phase 8 Packaging & Release Engineering | DevOps K | PENDING | Pending Gate G8 |
-| `TASK-610` | Phase 9 PR, CI, Merge, Tag v1.8.6, Release Publishing | Orchestrator A | PENDING | Pending Gate G9 |
+| `TASK-608` | Phase 7 Multi-Level Automated QA & Safety Verification | QA J / Safety E | **DONE** | Gate G7 passed; 59/59 tests pass, DEF-010 verified |
+| `TASK-609` | Phase 8 Packaging & Release Engineering | DevOps K | **DONE** | Gate G8 passed; all v1.8.6 release artifacts & checksums generated |
+| `TASK-610` | Phase 9 PR, CI, Merge, Tag v1.8.6, Release Publishing | Orchestrator A | **ACTIVE** | Ready for PR creation, CI wait, squash-merge, and release |
 
 ---
 
