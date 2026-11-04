@@ -2,9 +2,9 @@
 
 **Cycle:** 006  
 **Target Release:** v1.8.6 (Process-Aware Automatic Thermal Profile Switching & Custom Rules — OPP-008)  
-**Current Git Branch:** `cycle-006/opp-008-process-switching`  
-**Status:** IN PROGRESS (Cycle 006: Gates G0, G1, G2, G3, G4, G5, G6, G7 & G8 Passed)  
-**Last Updated:** 2026-11-04T14:32:00+06:00  
+**Current Git Branch:** `main`  
+**Status:** COMPLETED (Cycle 006: All Gates G0 through G9 Passed, Release v1.8.6 Shipped)  
+**Last Updated:** 2026-11-04T14:50:00+06:00  
 
 ---
 
@@ -21,7 +21,7 @@
 | **G6** | Implementation Verification | Implementer, QA J, Reviewer L | **PASSED** | OPP-008 modules implemented on branch `cycle-006/opp-008-process-switching`; 51/51 pytest passed, ruff clean (0 violations), check_env 10/10 ok |
 | **G7** | Multi-level Verification & HIL | QA J, Safety E, Reviewer L | **PASSED** | 59/59 pytest passed, 8 adversarial stress suites passing, ruff clean (0 violations), check_env 10/10 ok, DEF-010 verified (`reviewer_phase7_final/handoff.md`) |
 | **G8** | Release Engineering & Packaging | DevOps K, Reviewer L | **PASSED** | PyInstaller onedir GUI (`dist/tcc-g15`), onefile watchdog (`dist/tcc-watchdog.exe`), Inno Setup installer (`tcc-g15-installer-1.8.6.exe`), portable zip (`tcc-g15-portable-1.8.6.zip`), CycloneDX SBOM (`tcc-g15-sbom.json`), SHA256SUMS.txt verified |
-| **G9** | Cycle Evaluation & Learning | Orchestrator A | **PENDING** | PR merge, git tag v1.8.6, GitHub release |
+| **G9** | Cycle Evaluation & Learning | Orchestrator A, Worker Phase 9 | **PASSED** | PR #6 squash-merged to `main`, tag `v1.8.6` pushed, GitHub release `v1.8.6` published with verified assets |
 
 ---
 
@@ -38,7 +38,7 @@
 | `TASK-607` | Phase 6 Feature Branch Implementation | Implementer / QA J | **DONE** | Gate G6 passed; all OPP-008 modules, DEF-006, DEF-007, DEF-008, DEF-009 implemented & verified |
 | `TASK-608` | Phase 7 Multi-Level Automated QA & Safety Verification | QA J / Safety E | **DONE** | Gate G7 passed; 59/59 tests pass, DEF-010 verified |
 | `TASK-609` | Phase 8 Packaging & Release Engineering | DevOps K | **DONE** | Gate G8 passed; all v1.8.6 release artifacts & checksums generated |
-| `TASK-610` | Phase 9 PR, CI, Merge, Tag v1.8.6, Release Publishing | Orchestrator A | **ACTIVE** | Ready for PR creation, CI wait, squash-merge, and release |
+| `TASK-610` | Phase 9 PR, CI, Merge, Tag v1.8.6, Release Publishing | Orchestrator A / Worker Phase 9 | **DONE** | PR #6 squash-merged, CI passed, tag v1.8.6 pushed, GitHub release published |
 
 ---
 
