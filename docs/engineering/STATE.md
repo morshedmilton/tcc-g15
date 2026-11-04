@@ -54,3 +54,4 @@
   - `DEF-006` (P1): Diagnostics PII Redaction for `UserName`, `PrimaryOwnerName`, and `DNSHostName`.
   - `DEF-007` (P1): Promote `psutil==7.2.2` to production `requirements.txt`.
   - `DEF-009` (P1): Dedicated QThread and Qt Signal/Slot COM apartment isolation.
+  - `DEF-010` (P0): Prevent INV-1 emergency fail-safe trip and cooldown from corrupting user override state (`_userOverride`) during active process rule sessions.

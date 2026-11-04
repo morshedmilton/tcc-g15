@@ -311,6 +311,7 @@ class TCC_GUI(QtWidgets.QWidget):
     _userOverride: bool = False
     _missingCycles: dict = {}
     _inAutoSwitch: bool = False
+    _inFailsafeSwitch: bool = False
 
     _gModeKeySignal = QtCore.Signal()
     _gModeKeyPrevModeStr: Optional[str] = None
@@ -628,7 +629,11 @@ class TCC_GUI(QtWidgets.QWidget):
         self._lastGoodMode = ThermalMode.Balanced.value
 
         def onModeChange(val: str):
-            if not getattr(self, '_inAutoSwitch', False):
+            if (
+                not getattr(self, '_inAutoSwitch', False)
+                and not getattr(self, '_inFailsafeSwitch', False)
+                and getattr(self, '_failsafeTrippedPrevModeStr', None) is None
+            ):
                 if getattr(self, '_baselineMode', None) is not None:
                     self._userOverride = True
 
@@ -692,12 +697,20 @@ class TCC_GUI(QtWidgets.QWidget):
                     if not ac:
                         if currentMode != ThermalMode.Quiet.value:
                             self._acPreferredMode = currentMode
-                            self._modeSwitch.setChecked(ThermalMode.Quiet.value)
-                            self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
+                            self._inAutoSwitch = True
+                            try:
+                                self._modeSwitch.setChecked(ThermalMode.Quiet.value)
+                                self.toasterMessage(["Battery Mode", "Switched to Quiet profile", "Power Profile"])
+                            finally:
+                                self._inAutoSwitch = False
                     else:
                         if currentMode == ThermalMode.Quiet.value and self._acPreferredMode:
-                            self._modeSwitch.setChecked(self._acPreferredMode)
-                            self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile", "Power Profile"])
+                            self._inAutoSwitch = True
+                            try:
+                                self._modeSwitch.setChecked(self._acPreferredMode)
+                                self.toasterMessage(["AC Connected", f"Restored {self._acPreferredMode} profile", "Power Profile"])
+                            finally:
+                                self._inAutoSwitch = False
                 self._isAcPower = ac
 
             # Fail-Safe Handling
@@ -739,16 +752,29 @@ class TCC_GUI(QtWidgets.QWidget):
 
             if userTrip or hardTrip:
                 self._failsafeTrippedPrevModeStr = self._modeSwitch.getChecked()
-                self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
-                self._toasterMessageCurrentMode(source='failsafe')
+                self._inAutoSwitch = True
+                self._inFailsafeSwitch = True
+                try:
+                    self._modeSwitch.setChecked(ThermalMode.G_Mode.value)
+                    self._toasterMessageCurrentMode(source='failsafe')
+                finally:
+                    self._inAutoSwitch = False
+                    self._inFailsafeSwitch = False
                 if getattr(self, '_sessionTracker', None) is not None:
                     self._sessionTracker.record_failsafe_trip()
 
             if (self._failsafeTrippedPrevModeStr is not None and
                 (time.time() - self._failsafeTempIsHighTs) > self.FAILSAFE_RESET_AFTER_TEMP_IS_OK_FOR_SEC
             ):
-                self._modeSwitch.setChecked(self._failsafeTrippedPrevModeStr)
-                self._toasterMessageCurrentMode(source='failsafe')
+                restoreMode = self._failsafeTrippedPrevModeStr
+                self._inAutoSwitch = True
+                self._inFailsafeSwitch = True
+                try:
+                    self._modeSwitch.setChecked(restoreMode)
+                    self._toasterMessageCurrentMode(source='failsafe')
+                finally:
+                    self._inAutoSwitch = False
+                    self._inFailsafeSwitch = False
                 self._failsafeTrippedPrevModeStr = None
 
             # Update tray icon

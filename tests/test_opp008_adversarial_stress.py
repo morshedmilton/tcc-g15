@@ -266,14 +266,16 @@ def test_adversarial_3_emergency_failsafe_inv1_injection_under_active_rule(qapp,
         window._updateAppState()
         assert window._failsafeTrippedPrevModeStr is None
         assert window._modeSwitch.getChecked() == ThermalMode.Performance.value
+
+        # Step 5: After fail-safe cooldown completes, game exit debounce elapses and restores baseline
+        window._onProcessesScanned(set())
+        window._onProcessesScanned(set())
+        assert window._modeSwitch.getChecked() == ThermalMode.Balanced.value
+        assert window._baselineMode is None
     finally:
         window._destroy()
 
 
-@pytest.mark.xfail(
-    reason="DEF-010: Fail-safe trip & cooldown in AppGUI.py lines 742/750 omit _inAutoSwitch=True, inadvertently setting _userOverride=True and permanently preventing baseline restoration after game exit.",
-    strict=True
-)
 def test_adversarial_defect_failsafe_corrupts_user_override(qapp, mock_awcc):
     """DEFECT REPRODUCTION: Fail-Safe Trip Inadvertently Sets _userOverride=True.
 
